@@ -22,30 +22,37 @@ async function startKeywordScan() {
     try {
         const promptText = `Du bist ein technischer SEO- und E-Commerce-Datenbank-Scanner.
         Analysiere den genauen Suchbegriff / das Keyword "${input}" für den DACH-Markt.
-        Liefere realistische Schätzungen basierend auf historischen Suchmaschinen-Daten.
         
         REGELN:
         - Komplett auf Deutsch. Keine Floskeln, nur harte Datenpunkte.
-        - Layout EXAKT beibehalten:
+        - Layout EXAKT beibehalten, keine Sterne oder Markdown verwenden:
 
         <b class="text-white border-b border-green-500 block mb-2 mt-2">1. [ TRAFFIC & VOLUMEN ]</b>
-        • <b>Suchvolumen (geschätzt):</b> [z.B. 10.000 - 15.000 Suchanfragen pro Monat]<br>
+        • <b>Suchvolumen (Tag):</b> [Zahl, z.B. 350 Anfragen]<br>
+        • <b>Suchvolumen (Monat):</b> [Zahl, z.B. 10.500 Anfragen]<br>
         • <b>Trend-Richtung:</b> [Steigend / Fallend / Stabil]<br>
         • <b>Stärkster Monat:</b> [Wann wird am meisten gesucht?]<br><br>
 
         <b class="text-white border-b border-green-500 block mb-2">2. [ CONVERSION & KAUFINTENTION ]</b>
-        • <b>Kaufbereitschaft:</b> [Hoch (Kunde will sofort kaufen) / Mittel (Kunde vergleicht noch) / Niedrig (Kunde sucht nur Infos)]<br>
-        • <b>Geschätzte Conversion-Rate:</b> [Wie viel % der Sucher kaufen am Ende ein Produkt zu diesem Keyword? z.B. 2-4%]<br><br>
+        • <b>Kaufbereitschaft:</b> [Hoch / Mittel / Niedrig]<br>
+        • <b>Conversion-Rate:</b> [Prozentzahl, z.B. 2-4%]<br><br>
 
-        <b class="text-[#00ff41] border-b border-[#00ff41] block mb-2">3. [ VERWANDTE KAUF-KEYWORDS ]</b>
-        Wenn jemand dieses Wort sucht, sucht er oft auch nach diesen noch spezifischeren Begriffen, die leichter zu ranken sind:<br>
-        1. [Long-Tail Keyword 1]<br>
-        2. [Long-Tail Keyword 2]<br>
-        3. [Long-Tail Keyword 3]<br><br>
+        <b class="text-[#00ff41] border-b border-[#00ff41] block mb-2">3. [ TOP 10 VERWANDTE KAUF-KEYWORDS ]</b>
+        Nenne genau 10 spezifische Long-Tail-Keywords, die Käufer bei Google/Amazon eingeben:<br>
+        1. [Keyword 1]<br>
+        2. [Keyword 2]<br>
+        3. [Keyword 3]<br>
+        4. [Keyword 4]<br>
+        5. [Keyword 5]<br>
+        6. [Keyword 6]<br>
+        7. [Keyword 7]<br>
+        8. [Keyword 8]<br>
+        9. [Keyword 9]<br>
+        10. [Keyword 10]<br><br>
 
         <b class="text-red-400 border-b border-red-900 block mb-2">4. [ KONKURRENZ-ANALYSE ]</b>
         • <b>Wettbewerbsdichte:</b> [Hoch / Mittel / Niedrig]<br>
-        • <b>Warum rankt die Konkurrenz?:</b> [Was machen die Top-Ergebnisse bei Google/eBay richtig? z.B. "Nutzen viele Bilder", "Bieten kostenlosen Versand"]`;
+        • <b>Erfolgsfaktor:</b> [Was machen die Top-Ergebnisse bei Google/eBay richtig?]`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${token}`;
 
