@@ -1,7 +1,6 @@
 // app.js
 
 // --- 1. KONFIGURATION ALLER 5 MODULE ---
-// Hier war der Fehler: Das System kannte "keyword-scanner" noch nicht!
 const MODULES = {
     'ebay-finder': { title: 'NISCHEN // RADAR', desc: 'Finde hochprofitable, versteckte Nischen.' },
     'sold-gap': { title: 'TREND // SCANNER', desc: 'Analysiere Angebot vs. Nachfrage.' },
@@ -12,7 +11,7 @@ const MODULES = {
 
 // --- 2. LOGIN LOGIK ---
 let code = '';
-// WICHTIG: Falls du vorher einen anderen PIN hattest, ändere die "1337" wieder zu deinem PIN!
+// WICHTIG: Trage hier deinen eigenen PIN ein, sonst kommst du nicht rein!
 const CORRECT_CODE = '1337'; 
 
 function addDigit(digit) {
@@ -29,19 +28,29 @@ function clearCode() {
 
 function updateDisplay() {
     const display = document.getElementById('code-display');
-    display.innerText = code.padEnd(4, '_').split('').join(' ');
+    // Versteckt die echten Zahlen hinter Sternchen (*)
+    const maskedCode = "*".repeat(code.length).padEnd(4, '_').split('').join(' ');
+    display.innerText = maskedCode;
     display.classList.remove('error-state');
 }
 
 function checkCode() {
+    const display = document.getElementById('code-display');
+    
     if (code === CORRECT_CODE) {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('loading-section').classList.remove('hidden');
         simulateLoading();
     } else {
-        const display = document.getElementById('code-display');
+        // Reflow-Trick: Zwingt den Browser, das rote Schütteln JEDES MAL abzuspielen
+        display.classList.remove('error-state');
+        void display.offsetWidth; 
         display.classList.add('error-state');
-        setTimeout(clearCode, 500);
+        
+        // Wartet bis die Schüttel-Animation (0.4s) vorbei ist, bevor das Feld geleert wird
+        setTimeout(() => {
+            clearCode();
+        }, 600);
     }
 }
 
@@ -65,51 +74,38 @@ function simulateLoading() {
                 document.getElementById('app-content').classList.remove('hidden');
                 document.getElementById('app-content').classList.add('flex');
                 
-                // Lade das erste Modul beim Start
+                // Startet mit dem ersten Reiter
                 switchModule('ebay-finder', document.querySelector('.nav-btn'));
             }, 500);
         }
     }, 200);
 }
 
-// --- 3. MODUL MANAGER (Die "Schaltzentrale") ---
+// --- 3. MODUL MANAGER ---
 let currentScript = null;
 
 async function switchModule(moduleId, btnElement) {
-    // 1. Alle Buttons zurücksetzen und den geklickten markieren
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    if (btnElement) {
-        btnElement.classList.add('active');
-    }
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnElement) btnElement.classList.add('active');
 
-    // 2. Header anpassen (Zieht sich die Daten jetzt sicher aus dem MODULES Objekt oben)
     if (MODULES[moduleId]) {
         document.getElementById('module-title').innerText = MODULES[moduleId].title;
         document.getElementById('module-desc').innerText = MODULES[moduleId].desc;
-    } else {
-        document.getElementById('module-title').innerText = 'UNKNOWN // MODULE';
-        document.getElementById('module-desc').innerText = 'Fehlende Daten...';
     }
 
-    // 3. HTML und JS des Moduls laden (Mit Anti-Cache-Trick)
     try {
-        // Der Cache-Buster zwingt das Handy, immer die neueste Datei von GitHub zu laden
         const cacheBuster = new Date().getTime();
-        
         const response = await fetch(`modules/${moduleId}.html?v=${cacheBuster}`);
+        
         if (!response.ok) throw new Error(`Server antwortet mit Status: ${response.status}`);
         
         const html = await response.text();
         document.getElementById('tool-container').innerHTML = html;
 
-        // Altes Modul-Script entfernen, falls vorhanden
         if (currentScript) {
             currentScript.remove();
         }
         
-        // Neues Modul-Script laden
         const script = document.createElement('script');
         script.src = `modules/${moduleId}.js?v=${cacheBuster}`;
         document.body.appendChild(script);
