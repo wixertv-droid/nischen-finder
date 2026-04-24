@@ -1,0 +1,28 @@
+<div class="flex flex-col h-full overflow-hidden p-3 gap-3">
+    <div class="bg-black/40 border border-green-800 p-3 relative">
+        <div class="text-[10px] text-green-300 mb-2 leading-relaxed">
+            <strong class="text-white">ZIEL:</strong> Finde Produkte mit hoher Nachfrage. Das System vergleicht <strong class="text-white">verkaufte Artikel (letzte 90 Tage)</strong> mit aktiven Angeboten.
+        </div>
+        
+        <textarea id="trend-input" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-2 h-16 focus:outline-none focus:border-green-400 font-mono text-sm resize-none custom-scrollbar" placeholder="Suchbegriff eingeben..."></textarea>
+
+        <div class="mt-2 flex gap-2">
+            <button onclick="startTrendScan()" class="hud-btn flex-grow py-2 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black">
+                TREND-SCAN STARTEN
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-grow bg-black/40 border border-green-800 flex flex-col overflow-hidden relative">
+        <div class="bg-green-900/30 p-2 border-b border-green-800 text-[9px] tracking-wider text-green-400 flex justify-between">
+            <span>[ TREND-ANALYSE ]</span>
+            <span>METRIK: VERKAUFS-RATIO</span>
+        </div>
+
+        <div id="trend-results" class="flex-grow overflow-y-auto custom-scrollbar p-2 flex flex-col gap-2">
+            <div class="text-xs text-green-800 text-center mt-6 font-mono opacity-50">
+                Warte auf Eingabe...
+            </div>
+        </div>
+    </div>
+</div>
