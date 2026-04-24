@@ -1,40 +1,42 @@
 function loadSettings() {
-    // Schaut nach, ob auf deinem Handy schon ein Token gespeichert ist
     const token = localStorage.getItem('ebay_dww_token');
-    if (token) {
-        document.getElementById('api-token').value = token;
-        updateStatus(true);
-    } else {
-        updateStatus(false);
-    }
+    const aiToken = localStorage.getItem('ai_dww_token');
+    
+    if (token) document.getElementById('api-token').value = token;
+    if (aiToken) document.getElementById('ai-token').value = aiToken;
+    
+    updateStatus('status-ebay', token, 'EBAY');
+    updateStatus('status-ai', aiToken, 'AI_CORE');
 }
 
 function saveSettings() {
     const token = document.getElementById('api-token').value.trim();
+    const aiToken = document.getElementById('ai-token').value.trim();
     
-    if (token) {
-        // Speichert den Token im Browser deines Handys
-        localStorage.setItem('ebay_dww_token', token);
-        document.getElementById('status-display').innerHTML = "<span class='text-green-400 animate-pulse'>VERIFIZIERE TOKEN...</span>";
+    // eBay Speichern
+    if (token) localStorage.setItem('ebay_dww_token', token);
+    else localStorage.removeItem('ebay_dww_token');
+
+    // AI Speichern
+    if (aiToken) localStorage.setItem('ai_dww_token', aiToken);
+    else localStorage.removeItem('ai_dww_token');
+
+    document.getElementById('status-ebay').innerHTML = "<span class='text-green-400 animate-pulse'>VERIFYING...</span>";
+    document.getElementById('status-ai').innerHTML = "<span class='text-green-400 animate-pulse'>VERIFYING...</span>";
         
-        setTimeout(() => {
-            updateStatus(true);
-        }, 800);
+    setTimeout(() => {
+        updateStatus('status-ebay', token, 'EBAY');
+        updateStatus('status-ai', aiToken, 'AI_CORE');
+    }, 800);
+}
+
+function updateStatus(elementId, hasToken, name) {
+    const display = document.getElementById(elementId);
+    if (hasToken) {
+        display.innerHTML = `<span class='text-green-400 drop-shadow-[0_0_5px_rgba(0,255,65,0.8)]'>[ ${name}: ONLINE ]</span>`;
     } else {
-        // Löscht den Token
-        localStorage.removeItem('ebay_dww_token');
-        updateStatus(false);
+        display.innerHTML = `<span class='text-red-500'>[ ${name}: OFFLINE ]</span>`;
     }
 }
 
-function updateStatus(isOnline) {
-    const display = document.getElementById('status-display');
-    if (isOnline) {
-        display.innerHTML = "<span class='text-green-400 drop-shadow-[0_0_5px_rgba(0,255,65,0.8)]'>ONLINE - UPLINK ESTABLISHED</span>";
-    } else {
-        display.innerHTML = "<span class='text-red-500'>OFFLINE - KEIN TOKEN GEFUNDEN</span>";
-    }
-}
-
-// Wird automatisch ausgeführt, sobald man auf "SYSTEM" klickt
 loadSettings();
