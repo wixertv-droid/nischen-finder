@@ -1,54 +1,52 @@
-// modules/ebay-finder.js
 async function startEbayScan() {
     const input = document.getElementById('keyword-input').value;
-    // Trennt Eingaben, entfernt leere Zeilen
     const keywords = input.split('\n').map(k => k.trim()).filter(k => k !== "");
     const resultsDiv = document.getElementById('scan-results');
 
-    if (keywords.length === 0) {
-        resultsDiv.innerHTML = "<div class='text-red-500 text-xs text-center mt-4'>[ERR_01] NO TARGETS SPECIFIED.</div>";
-        return;
-    }
+    if (keywords.length === 0) return;
 
-    // Lade-Animation
-    resultsDiv.innerHTML = `
-        <div class='text-green-400 text-xs flex items-center justify-center h-full gap-2'>
-            <div class='w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-            <span>INITIALIZING PROXY RELAY...</span>
-        </div>`;
+    resultsDiv.innerHTML = `<div class='text-green-400 text-xs text-center mt-4 animate-pulse'>Verbinde mit eBay Datenbank...</div>`;
 
-    // Verzögerung für den "Hacker"-Effekt
     setTimeout(() => {
         resultsDiv.innerHTML = "";
         
         keywords.forEach((kw, index) => {
             setTimeout(() => {
-                // HIER IST UNSER FILTER (Später ersetzen wir Math.random durch eBay Daten)
-                const mockTreffer = Math.floor(Math.random() * 120); 
-                const threshold = 30; // Ab wann es eine Nische ist
-                const isNiche = mockTreffer < threshold; 
+                // Simulation (wird später durch eBay API ersetzt)
+                const activeListings = Math.floor(Math.random() * 150); 
+                const threshold = 30; 
+                const isNiche = activeListings < threshold; 
                 
-                // Optische Logik (Idiotensicher)
-                // Grün = Geil, Dunkel = Uninteressant
-                const rowColor = isNiche ? 'text-green-400 bg-green-900/20 border-l-green-500' : 'text-green-800 bg-black/40 border-l-transparent';
-                const icon = isNiche ? '<span class="text-green-400">O</span>' : '<span class="text-green-800 opacity-50">X</span>';
-                const statusTag = isNiche ? '<span class="bg-green-500 text-black px-1 rounded text-[10px] font-bold">NICHE</span>' : '<span class="text-[10px] opacity-40">SKIP</span>';
+                let boxStyle, statusText, actionText;
 
-                // Das neue Tabellen-Zeilen-Format
+                if (isNiche) {
+                    // Positives Ergebnis (Grün leuchtend)
+                    boxStyle = 'border-l-4 border-l-green-400 bg-green-900/20';
+                    statusText = `<span class="text-white font-bold">${activeListings} aktive Angebote</span>`;
+                    actionText = '<span class="bg-green-500 text-black px-2 py-0.5 text-[9px] font-bold rounded">NISCHE GEFUNDEN! ZUSCHLAGEN!</span>';
+                } else {
+                    // Negatives Ergebnis (Dunkel, unauffällig)
+                    boxStyle = 'border-l-4 border-l-green-900/50 bg-black/40 opacity-70';
+                    statusText = `<span class="text-green-600">${activeListings} aktive Angebote</span>`;
+                    actionText = '<span class="text-red-500 text-[9px] border border-red-900/50 px-1">ZU VIEL KONKURRENZ (SKIP)</span>';
+                }
+
+                // Detaillierter Block für jedes Keyword
                 const rowHtml = `
-                    <div class="grid grid-cols-12 gap-2 items-center p-2 border-l-2 ${rowColor} font-mono text-sm border-b border-green-900/30 hover:bg-green-900/40 transition-colors">
-                        <div class="col-span-1 text-center font-bold">${icon}</div>
-                        <div class="col-span-7 truncate" title="${kw}">${kw}</div>
-                        <div class="col-span-2 text-right font-bold tracking-widest ${isNiche ? 'text-white drop-shadow-[0_0_5px_rgba(0,255,65,0.8)]' : ''}">${mockTreffer}</div>
-                        <div class="col-span-2 text-right">${statusTag}</div>
+                    <div class="p-2 border border-green-900/30 ${boxStyle} transition-all">
+                        <div class="flex justify-between items-start mb-1">
+                            <div class="font-bold text-sm tracking-wide text-green-300 uppercase">${kw}</div>
+                            ${actionText}
+                        </div>
+                        <div class="text-[11px] text-green-500">
+                            Konkurrenz-Check: Es gibt aktuell ${statusText} für diesen Suchbegriff auf eBay.
+                        </div>
                     </div>
                 `;
                 
                 resultsDiv.innerHTML += rowHtml;
-                
-                // Auto-Scroll nach unten
                 resultsDiv.scrollTop = resultsDiv.scrollHeight;
-            }, index * 400); // 400ms Abstand pro Zeile für den Daten-Stream-Effekt
+            }, index * 400); 
         });
-    }, 800);
+    }, 600);
 }
