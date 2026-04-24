@@ -14,7 +14,7 @@ async function startAiScan() {
     resultsDiv.innerHTML = `
         <div class='flex flex-col items-center justify-center h-full mt-10 gap-3'>
             <div class='w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Neural Uplink: Analyzing ${input}...</div>
+            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Neural Uplink: Gen 2.0 Analyzing ${input}...</div>
         </div>`;
 
     try {
@@ -25,8 +25,8 @@ async function startAiScan() {
         2. RISIKEN (Gefahren?)
         3. IDEEN (Produktvorschläge?)`;
 
-        // Wir nutzen jetzt den stabilen v1 Pfad, der für neue Keys zwingend ist
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${token}`;
+        // Der Sweetspot: Gemini 2.0 Flash (Stabil, verfügbar, schnell)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${token}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -38,27 +38,31 @@ async function startAiScan() {
 
         const data = await response.json();
 
-        // FEHLER-CHECK
+        // Fehler abfangen
         if (data.error) {
-            // Falls v1 nicht geht, probieren wir als allerletzte Rettung v1beta im selben Call
-            throw new Error(`API_RESPONSE: ${data.error.message} (Code: ${data.error.code})`);
+            let errorMsg = data.error.message;
+            if (data.error.code === 503) {
+                errorMsg = "Google Server sind aktuell überlastet. Warte ein paar Sekunden und klicke nochmal.";
+            }
+            throw new Error(`API_RESPONSE: ${errorMsg} (Code: ${data.error.code})`);
         }
 
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("EMPTY_RESPONSE: Keine Daten empfangen.");
+            throw new Error("EMPTY_RESPONSE: Keine Daten erhalten.");
         }
 
         let aiOutput = data.candidates[0].content.parts[0].text;
 
-        // Jarvis-Formatierung
+        // Jarvis Formatierung
         aiOutput = aiOutput.replace(/\*\*(.*?)\*\*/g, '<b class="text-white">$1</b>');
+        aiOutput = aiOutput.replace(/\*(.*?)\*/g, '<b class="text-white">$1</b>');
         aiOutput = aiOutput.replace(/\n/g, '<br>');
 
         resultsDiv.innerHTML = `
             <div class="border-l-2 border-l-green-500 bg-black/60 p-4 leading-relaxed font-mono shadow-[0_0_20px_rgba(0,255,65,0.1)]">
                 <div class="font-bold text-sm text-white tracking-widest uppercase mb-4 border-b border-green-900/50 pb-2 flex justify-between">
                     <span>TARGET: ${input}</span>
-                    <span class="text-green-500 text-[10px]">[UPLINK_STABLE]</span>
+                    <span class="text-green-500 text-[10px]">[UPLINK_GEMINI_2.0]</span>
                 </div>
                 <div class="text-[11px] text-green-400">
                     ${aiOutput}
@@ -75,12 +79,10 @@ async function startAiScan() {
         console.error("AI_CORE_CRASH:", error);
         resultsDiv.innerHTML = `
             <div class='p-4 border border-red-900 bg-red-900/10 text-red-500 font-mono text-[10px]'>
-                <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_FAILURE] AI_CORE_REJECTED</div>
-                <div>CAUSE: ${error.message}</div>
-                <div class='mt-4 p-2 bg-black/40 border border-red-500/30 text-white'>
-                    PROTOKOLL-UPDATE:<br>
-                    1. Prüfe im AI Studio (Get API Key), ob dein Key für ein 'Default Project' erstellt wurde.<br>
-                    2. Wenn 404 kommt: Dein Key ist brandneu und Google erzwingt die v1-Schnittstelle. Dieser Code nutzt sie jetzt.
+                <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_FAILURE]</div>
+                <div class='mb-2'>CAUSE: ${error.message}</div>
+                <div class='p-2 bg-black/40 border border-red-500/30 text-white'>
+                    Wenn hier immer noch 503 steht, zwingt Google Gratis-Nutzer gerade in die Warteschlange. Klicke einfach 2-3 mal im Abstand von 10 Sekunden auf den Button, dann rutschst du meistens durch!
                 </div>
             </div>`;
     }
