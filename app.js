@@ -12,7 +12,7 @@ const MODULES = {
 // --- 2. LOGIN LOGIK ---
 let code = '';
 // WICHTIG: Trage hier deinen eigenen PIN ein, sonst kommst du nicht rein!
-const CORRECT_CODE = '1337'; 
+const CORRECT_CODE = '0815'; 
 
 function addDigit(digit) {
     if (code.length < 4) {
