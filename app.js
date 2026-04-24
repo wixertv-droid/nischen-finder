@@ -1,5 +1,5 @@
 let currentCode = "";
-const CORRECT_CODE = "0815"; // Dein Code zum Einloggen
+const CORRECT_CODE = "0815"; 
 
 function addDigit(digit) {
     if (currentCode.length < 4) {
@@ -29,13 +29,10 @@ function checkCode() {
     }
 }
 
-// DAS LADE-SYSTEM (0% bis 100%)
 function startBootSequence() {
-    // Verstecke Login und Header-Logo
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('main-header').classList.add('opacity-0');
     
-    // Zeige Lade-Bereich
     const loadingSection = document.getElementById('loading-section');
     loadingSection.classList.remove('hidden');
 
@@ -47,12 +44,11 @@ function startBootSequence() {
     const phrases = [
         "Bypassing eBay Security...",
         "Establishing Satellite Uplink...",
-        "Syncing Market Modules...",
+        "Connecting to AI Neural Net...",
         "Ready to scan."
     ];
 
     const interval = setInterval(() => {
-        // Zufälliger Fortschritt für Hacker-Gefühl
         progress += Math.floor(Math.random() * 7) + 1;
         
         if (progress >= 100) {
@@ -66,19 +62,18 @@ function startBootSequence() {
             }, 500);
         }
 
-        // UI Aktualisierung
         progressBar.style.width = progress + "%";
         percentText.innerText = progress + "%";
         
-        // Texte passend zum Prozentwert
         if (progress < 30) statusText.innerText = phrases[0];
         else if (progress < 60) statusText.innerText = phrases[1];
         else if (progress < 90) statusText.innerText = phrases[2];
         else statusText.innerText = phrases[3];
 
-    }, 80; // Geschwindigkeit des Ladens
+    }, 80); 
 }
 
+// HIER IST DAS NEUE MODUL REGISTRIERT
 const moduleInfo = {
     'ebay-finder': {
         title: "EBAY // NISCHEN-SCAN",
@@ -88,9 +83,13 @@ const moduleInfo = {
         title: "EBAY // TRENDS",
         desc: "Analysiert historische Verkaufszahlen vs. aktuelles Angebot."
     },
+    'ai-nexus': {
+        title: "NEURAL // AI_CORE",
+        desc: "Künstliche Intelligenz bewertet Potenzial, Risiken und generiert Produktideen für deine Ziel-Nische."
+    },
     'settings': {
         title: "SYSTEM // CONFIG",
-        desc: "Verwalte deine API-Keys und Verbindungsdaten lokal."
+        desc: "Verwalte deine API-Keys (eBay & OpenAI) lokal und sicher."
     }
 };
 
@@ -102,16 +101,20 @@ async function switchModule(moduleName, btnElement) {
     document.getElementById('module-desc').innerText = moduleInfo[moduleName].desc;
 
     const container = document.getElementById('tool-container');
-    container.innerHTML = `<div class='h-full flex items-center justify-center animate-pulse text-xs'>[SYSTEM] FETCHING...</div>`;
+    container.innerHTML = `<div class='h-full flex items-center justify-center animate-pulse text-xs font-mono text-green-500'>[SYSTEM] FETCHING DATA...</div>`;
     
     try {
         const response = await fetch(`./modules/${moduleName}.html`);
         container.innerHTML = await response.text();
         
+        const oldScript = document.getElementById(`script-${moduleName}`);
+        if (oldScript) oldScript.remove();
+
         const script = document.createElement('script');
         script.src = `./modules/${moduleName}.js`;
+        script.id = `script-${moduleName}`;
         document.body.appendChild(script);
     } catch (err) {
-        container.innerHTML = `<div class='p-4 text-red-500'>Error loading module.</div>`;
+        container.innerHTML = `<div class='p-4 text-red-500 text-xs text-center border border-red-900 bg-red-900/20 mt-10'>[FATAL ERR] Modul offline.</div>`;
     }
 }
