@@ -1,120 +1,129 @@
-let currentCode = "";
-const CORRECT_CODE = "0815"; 
+// app.js
+
+// --- 1. KONFIGURATION ALLER 5 MODULE ---
+// Hier war der Fehler: Das System kannte "keyword-scanner" noch nicht!
+const MODULES = {
+    'ebay-finder': { title: 'NISCHEN // RADAR', desc: 'Finde hochprofitable, versteckte Nischen.' },
+    'sold-gap': { title: 'TREND // SCANNER', desc: 'Analysiere Angebot vs. Nachfrage.' },
+    'ai-nexus': { title: 'NEURAL // AI_CORE', desc: 'Künstliche Intelligenz bewertet Potenzial und SEO.' },
+    'keyword-scanner': { title: 'KEYWORD // METRICS', desc: 'Analysiere Suchvolumen, Traffic und Kaufintention.' },
+    'settings': { title: 'SYSTEM // CONFIG', desc: 'Verwalte deine API-Keys lokal und sicher.' }
+};
+
+// --- 2. LOGIN LOGIK ---
+let code = '';
+// WICHTIG: Falls du vorher einen anderen PIN hattest, ändere die "1337" wieder zu deinem PIN!
+const CORRECT_CODE = '1337'; 
 
 function addDigit(digit) {
-    if (currentCode.length < 4) {
-        currentCode += digit;
+    if (code.length < 4) {
+        code += digit;
         updateDisplay();
     }
 }
 
 function clearCode() {
-    currentCode = "";
+    code = '';
     updateDisplay();
-    document.getElementById('login-section').classList.remove('error-state');
 }
 
 function updateDisplay() {
     const display = document.getElementById('code-display');
-    display.innerText = "* ".repeat(currentCode.length) + "_ ".repeat(4 - currentCode.length);
+    display.innerText = code.padEnd(4, '_').split('').join(' ');
+    display.classList.remove('error-state');
 }
 
 function checkCode() {
-    if (currentCode === CORRECT_CODE) {
-        startBootSequence();
+    if (code === CORRECT_CODE) {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('loading-section').classList.remove('hidden');
+        simulateLoading();
     } else {
-        document.getElementById('login-section').classList.add('error-state');
-        document.getElementById('code-display').innerText = "ERR!";
-        setTimeout(clearCode, 1000);
+        const display = document.getElementById('code-display');
+        display.classList.add('error-state');
+        setTimeout(clearCode, 500);
     }
 }
 
-function startBootSequence() {
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('main-header').classList.add('opacity-0');
+function simulateLoading() {
+    let percent = 0;
+    const percentDiv = document.getElementById('loading-percent');
+    const bar = document.getElementById('progress-bar');
     
-    const loadingSection = document.getElementById('loading-section');
-    loadingSection.classList.remove('hidden');
-
-    let progress = 0;
-    const progressBar = document.getElementById('progress-bar');
-    const percentText = document.getElementById('loading-percent');
-    const statusText = document.getElementById('loading-text');
-
-    const phrases = [
-        "Bypassing eBay Security...",
-        "Establishing Satellite Uplink...",
-        "Connecting to AI Neural Net...",
-        "Ready to scan."
-    ];
-
     const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 7) + 1;
+        percent += Math.floor(Math.random() * 15) + 5;
+        if (percent > 100) percent = 100;
         
-        if (progress >= 100) {
-            progress = 100;
+        percentDiv.innerText = percent + '%';
+        bar.style.width = percent + '%';
+        
+        if (percent === 100) {
             clearInterval(interval);
-            
             setTimeout(() => {
-                loadingSection.classList.add('hidden');
+                document.getElementById('loading-section').classList.add('hidden');
+                document.getElementById('main-header').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('flex');
+                
+                // Lade das erste Modul beim Start
                 switchModule('ebay-finder', document.querySelector('.nav-btn'));
             }, 500);
         }
-
-        progressBar.style.width = progress + "%";
-        percentText.innerText = progress + "%";
-        
-        if (progress < 30) statusText.innerText = phrases[0];
-        else if (progress < 60) statusText.innerText = phrases[1];
-        else if (progress < 90) statusText.innerText = phrases[2];
-        else statusText.innerText = phrases[3];
-
-    }, 80); 
+    }, 200);
 }
 
-// HIER IST DAS NEUE MODUL REGISTRIERT
-const moduleInfo = {
-    'ebay-finder': {
-        title: "EBAY // NISCHEN-SCAN",
-        desc: "Prüft aktive Angebote der Konkurrenz. Findet Lücken mit wenig Wettbewerb."
-    },
-    'sold-gap': {
-        title: "EBAY // TRENDS",
-        desc: "Analysiert historische Verkaufszahlen vs. aktuelles Angebot."
-    },
-    'ai-nexus': {
-        title: "NEURAL // AI_CORE",
-        desc: "Künstliche Intelligenz bewertet Potenzial, Risiken und generiert Produktideen für deine Ziel-Nische."
-    },
-    'settings': {
-        title: "SYSTEM // CONFIG",
-        desc: "Verwalte deine API-Keys (eBay & OpenAI) lokal und sicher."
+// --- 3. MODUL MANAGER (Die "Schaltzentrale") ---
+let currentScript = null;
+
+async function switchModule(moduleId, btnElement) {
+    // 1. Alle Buttons zurücksetzen und den geklickten markieren
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    if (btnElement) {
+        btnElement.classList.add('active');
     }
-};
 
-async function switchModule(moduleName, btnElement) {
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    if(btnElement) btnElement.classList.add('active');
+    // 2. Header anpassen (Zieht sich die Daten jetzt sicher aus dem MODULES Objekt oben)
+    if (MODULES[moduleId]) {
+        document.getElementById('module-title').innerText = MODULES[moduleId].title;
+        document.getElementById('module-desc').innerText = MODULES[moduleId].desc;
+    } else {
+        document.getElementById('module-title').innerText = 'UNKNOWN // MODULE';
+        document.getElementById('module-desc').innerText = 'Fehlende Daten...';
+    }
 
-    document.getElementById('module-title').innerText = moduleInfo[moduleName].title;
-    document.getElementById('module-desc').innerText = moduleInfo[moduleName].desc;
-
-    const container = document.getElementById('tool-container');
-    container.innerHTML = `<div class='h-full flex items-center justify-center animate-pulse text-xs font-mono text-green-500'>[SYSTEM] FETCHING DATA...</div>`;
-    
+    // 3. HTML und JS des Moduls laden (Mit Anti-Cache-Trick)
     try {
-        const response = await fetch(`./modules/${moduleName}.html`);
-        container.innerHTML = await response.text();
+        // Der Cache-Buster zwingt das Handy, immer die neueste Datei von GitHub zu laden
+        const cacheBuster = new Date().getTime();
         
-        const oldScript = document.getElementById(`script-${moduleName}`);
-        if (oldScript) oldScript.remove();
+        const response = await fetch(`modules/${moduleId}.html?v=${cacheBuster}`);
+        if (!response.ok) throw new Error(`Server antwortet mit Status: ${response.status}`);
+        
+        const html = await response.text();
+        document.getElementById('tool-container').innerHTML = html;
 
+        // Altes Modul-Script entfernen, falls vorhanden
+        if (currentScript) {
+            currentScript.remove();
+        }
+        
+        // Neues Modul-Script laden
         const script = document.createElement('script');
-        script.src = `./modules/${moduleName}.js`;
-        script.id = `script-${moduleName}`;
+        script.src = `modules/${moduleId}.js?v=${cacheBuster}`;
         document.body.appendChild(script);
-    } catch (err) {
-        container.innerHTML = `<div class='p-4 text-red-500 text-xs text-center border border-red-900 bg-red-900/20 mt-10'>[FATAL ERR] Modul offline.</div>`;
+        currentScript = script;
+
+    } catch (error) {
+        console.error("CRITICAL ERROR beim Modul-Wechsel:", error);
+        document.getElementById('tool-container').innerHTML = `
+            <div class="p-6 text-red-500 font-mono text-xs border border-red-900 bg-red-900/20 m-4 shadow-[0_0_15px_rgba(255,0,51,0.2)]">
+                <b class="text-sm border-b border-red-900 block mb-2 pb-1">[ SYSTEM_ERROR ]</b>
+                Modul <i>${moduleId}.html</i> konnte nicht geladen werden.<br><br>
+                <b>Ursache:</b> ${error.message}<br><br>
+                <i>Warte 1-2 Minuten. GitHub Pages braucht oft kurz, bis neue Dateien online sind.</i>
+            </div>
+        `;
     }
 }
