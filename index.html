@@ -3,42 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nischen-Finder</title>
+    <title>DWW // MARKET-SCANNER</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --matrix-green: #00ff41;
+            --matrix-dark: #003b00;
+        }
+        body {
+            background-color: #050505;
+            background-image: 
+                linear-gradient(rgba(0, 59, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 59, 0, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Jarvis-Glow Effekt */
+        .glow-green {
+            text-shadow: 0 0 5px var(--matrix-green), 0 0 10px var(--matrix-dark);
+        }
+        /* Scanline Effekt */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+        .keypad-btn {
+            background: rgba(0, 40, 0, 0.3);
+            border: 1px solid var(--matrix-green);
+            box-shadow: inset 0 0 5px var(--matrix-dark);
+            transition: all 0.1s ease;
+        }
+        .keypad-btn:active {
+            background: var(--matrix-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--matrix-green);
+        }
+        .border-glow {
+            border: 1px solid var(--matrix-green);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-5">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 class="text-xl font-bold mb-4">eBay Lücken-Finder 🔍</h1>
-        
-        <textarea id="keywords" class="w-full p-2 border rounded mb-4" placeholder="Keywords (eines pro Zeile)"></textarea>
-        
-        <button onclick="startAnalysis()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">Analyse starten</button>
+<body>
 
-        <div id="results" class="mt-6 space-y-2">
+    <header class="mb-8 text-center z-10">
+        <div class="text-xs tracking-tighter opacity-70 mb-1">DEUTSCHES WURSTWERK // ENCRYPTION LAYER v4.0</div>
+        <h1 class="text-4xl font-black tracking-widest glow-green italic">SYSTEM ACCESS</h1>
+        <div class="h-1 w-full bg-green-900 mt-2 relative overflow-hidden">
+            <div class="absolute inset-0 bg-green-400 w-1/3 animate-[slide_2s_infinite]"></div>
+        </div>
+    </header>
+
+    <div id="login-section" class="z-10 bg-black/60 p-8 rounded-lg border-glow backdrop-blur-sm">
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('1')">1</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('2')">2</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('3')">3</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('4')">4</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('5')">5</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('6')">6</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('7')">7</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('8')">8</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('9')">9</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold opacity-50" onclick="clearCode()">CLR</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="addDigit('0')">0</button>
+            <button class="keypad-btn w-14 h-14 rounded text-xl font-bold" onclick="checkCode()">EXE</button>
+        </div>
+        <div id="code-display" class="text-center text-3xl tracking-[0.5em] font-bold text-green-400 drop-shadow-md">
+            _ _ _ _
+        </div>
+    </div>
+
+    <div id="app-content" class="hidden z-10 w-full max-w-2xl h-[80vh] bg-black/80 border-glow p-4 overflow-hidden flex flex-col">
+        <nav class="flex gap-4 border-b border-green-900 pb-2 mb-4 text-xs">
+            <span class="text-green-400 cursor-pointer hover:underline">[ EBAY_SCAN ]</span>
+            <span class="opacity-40 cursor-not-allowed">[ AMZ_SCAN ]</span>
+            <span class="opacity-40 cursor-not-allowed">[ SETTINGS ]</span>
+        </nav>
+        <div id="tool-container" class="flex-grow overflow-y-auto custom-scrollbar">
             </div>
     </div>
 
-    <script>
-        async function startAnalysis() {
-            const input = document.getElementById('keywords').value;
-            const keywords = input.split('\n').filter(k => k.trim() !== "");
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = "<p>Suche läuft...</p>";
+    <footer class="mt-8 text-[10px] opacity-40 uppercase tracking-widest z-10">
+        Secure Terminal // IP: 127.0.0.1 // Node: GITHUB-PAGES
+    </footer>
 
-            for (let kw of keywords) {
-                // HINWEIS: Hier kommt später dein eBay API-Aufruf rein
-                // Für den allerersten Test simulieren wir die Logik:
-                const mockTreffer = Math.floor(Math.random() * 200); // Test-Zahl
-                
-                let color = mockTreffer < 50 ? "bg-green-100 border-green-500" : "bg-red-100 border-red-500";
-                
-                resultsDiv.innerHTML += `
-                    <div class="border-l-4 p-3 ${color} rounded shadow-sm">
-                        <span class="font-bold">${kw}</span>: ${mockTreffer} Treffer
-                    </div>
-                `;
-            }
+    <style>
+        @keyframes slide {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(300%); }
         }
-    </script>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #001100; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--matrix-green); }
+    </style>
+
+    <script src="app.js"></script>
 </body>
 </html>
