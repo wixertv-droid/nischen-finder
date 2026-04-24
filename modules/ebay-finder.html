@@ -1,45 +1,30 @@
-<div class="flex flex-col h-full gap-4">
+<div class="flex flex-col h-full overflow-hidden p-3 gap-3">
     
-    <div class="hud-panel p-3 border-l-4 border-l-green-500 bg-black/40">
-        <div class="flex justify-between items-center border-b border-green-800/50 pb-1 mb-2">
-            <span class="text-[10px] text-green-400 tracking-widest">[ INPUT PARAMETERS ]</span>
-            <span class="text-[10px] text-green-600">DELIMITER: NEW LINE</span>
+    <div class="bg-black/40 border border-green-800 p-3 relative">
+        <div class="text-[10px] text-green-300 mb-2 leading-relaxed">
+            <strong class="text-white">ZIEL:</strong> Gib deine Produkt-Ideen ein (1 pro Zeile). Das System prüft die eBay-Datenbank auf <strong class="text-white">die Anzahl der aktiven Konkurrenten</strong>.
         </div>
         
-        <div class="relative">
-            <div class="absolute top-2 left-2 w-2 h-4 bg-green-500 animate-pulse pointer-events-none"></div>
-            <textarea id="keyword-input" class="w-full bg-transparent border border-green-900/50 text-green-400 p-2 pl-6 h-24 focus:outline-none focus:border-green-400 font-mono text-sm resize-none custom-scrollbar" placeholder="keyword_1&#10;keyword_2&#10;..."></textarea>
-        </div>
+        <textarea id="keyword-input" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-2 h-20 focus:outline-none focus:border-green-400 font-mono text-sm resize-none custom-scrollbar" placeholder="Beispiel:&#10;handyhülle holz&#10;lederdose vintage"></textarea>
 
         <div class="mt-2 flex gap-2">
-            <button onclick="startEbayScan()" class="hud-btn flex-grow py-2 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black transition-all">
-                > EXECUTE SCAN
+            <button onclick="startEbayScan()" class="hud-btn flex-grow py-2 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black">
+                SCAN STARTEN
             </button>
-            <button onclick="document.getElementById('keyword-input').value=''" class="hud-btn px-4 text-xs text-red-500 border-red-900/50 hover:bg-red-900/30">
-                CLR
-            </button>
+            <button onclick="document.getElementById('keyword-input').value=''" class="hud-btn px-4 text-xs text-red-500 border-red-900/50">DEL</button>
         </div>
     </div>
 
-    <div class="hud-panel flex-grow flex flex-col p-3 bg-black/40 overflow-hidden relative">
-        <div class="flex justify-between items-center border-b border-green-500 pb-1 mb-2">
-            <span class="text-[10px] text-green-400 tracking-widest">[ DATA STREAM ]</span>
-            <span class="text-[10px] bg-green-900/50 px-2 py-0.5 rounded text-green-400">TARGET: < 30</span>
+    <div class="flex-grow bg-black/40 border border-green-800 flex flex-col overflow-hidden relative">
+        <div class="bg-green-900/30 p-2 border-b border-green-800 text-[9px] tracking-wider text-green-400 flex justify-between">
+            <span>[ LIVE DATEN-STREAM ]</span>
+            <span>FILTER: < 30 KONKURRENTEN</span>
         </div>
 
-        <div class="grid grid-cols-12 gap-2 text-[10px] text-green-600 mb-2 px-2 border-b border-green-900/50 pb-1">
-            <div class="col-span-1">SYS</div>
-            <div class="col-span-7">TARGET_KEYWORD</div>
-            <div class="col-span-2 text-right">MATCHES</div>
-            <div class="col-span-2 text-right">STAT</div>
-        </div>
-
-        <div id="scan-results" class="flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1 pb-4">
-            <div class="text-xs text-green-800 text-center mt-10 font-mono">
-                [ WAITING FOR QUERY INPUT ]
+        <div id="scan-results" class="flex-grow overflow-y-auto custom-scrollbar p-2 flex flex-col gap-2">
+            <div class="text-xs text-green-800 text-center mt-6 font-mono opacity-50">
+                Warte auf Eingabe...
             </div>
         </div>
-        
-        <div class="absolute top-0 left-0 w-full h-full pointer-events-none bg-[linear-gradient(rgba(0,255,65,0.03)_1px,transparent_1px)] bg-[size:100%_4px]"></div>
     </div>
 </div>
