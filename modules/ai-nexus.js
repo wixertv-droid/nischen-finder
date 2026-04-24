@@ -20,23 +20,23 @@ async function startAiScan() {
 
         <b class="text-white border-b border-green-500 block mb-2 mt-2">1. [ MARKT & PROGNOSE ]</b>
         • <b>Markt-Lage:</b> [1 Satz Prognose]<br>
-        • <b>Werbekosten (Klickpreis):</b> [Schätzung]<br>
-        • <b>Gewinnmarge:</b> [Schätzung in %]<br><br>
+        • <b>Werbekosten (Klickpreis):</b> [Betrag]<br>
+        • <b>Gewinnmarge:</b> [Prozentzahl]<br><br>
 
         <b class="text-white border-b border-green-500 block mb-2">2. [ KÄUFER-PSYCHOLOGIE ]</b>
-        • <b>Wer kauft das?:</b> [Zielgruppe]<br>
-        • <b>Warum?:</b> [Gelöster Schmerz]<br><br>
+        • <b>Wer kauft das?:</b> [Exakte Zielgruppe]<br>
+        • <b>Warum?:</b> [Gelöster Schmerz oder Wunsch]<br><br>
 
         <b class="text-[#00ff41] border-b border-[#00ff41] block mb-2">3. [ SOCIAL MEDIA & MARKETING ]</b>
         • <b>Plattform:</b> [Beste Plattform]<br>
         • <b>Video Hook:</b> [Idee für die ersten 3 Sekunden]<br><br>
 
-        <b class="text-yellow-400 border-b border-yellow-700 block mb-2">4. [ OPTIMALE SEO KEYWORDS ]</b>
-        Nenne die 5 wichtigsten Suchbegriffe, die zwingend in den eBay/Amazon Titel müssen, um gefunden zu werden:<br>
-        • [Keyword 1], [Keyword 2], [Keyword 3], [Keyword 4], [Keyword 5]<br><br>
+        <b class="text-yellow-400 border-b border-yellow-700 block mb-2">4. [ TOP 20 SEO KEYWORDS ]</b>
+        Nenne exakt die 20 wichtigsten Suchbegriffe, die zwingend in den eBay/Amazon Titel oder die Tags müssen (als kompakte Liste mit Kommas getrennt, keine Stichpunkte):<br>
+        [Hier die 20 Keywords, z.B. Keyword 1, Keyword 2, Keyword 3...]<br><br>
 
         <b class="text-red-400 border-b border-red-900 block mb-2">5. [ DIE GRÖSSTEN GEFAHREN ]</b>
-        • <b>Risiko:</b> [Konkretes Risiko]`;
+        • <b>Risiko:</b> [Konkretes Risiko der Nische]`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${token}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
