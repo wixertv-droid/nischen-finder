@@ -1,118 +1,67 @@
 let currentCode = "";
-const CORRECT_CODE = "0815"; // Hier deinen Master-Code festlegen
+const CORRECT_CODE = "0815";
 
-// Tasten-Eingabe
 function addDigit(digit) {
-    if (currentCode.length < 4) {
-        currentCode += digit;
-        updateDisplay();
-    }
+    if (currentCode.length < 4) { currentCode += digit; updateDisplay(); }
 }
 
-// Eingabe löschen
 function clearCode() {
-    currentCode = "";
-    updateDisplay();
-    
-    // Falls Fehler-Status noch aktiv ist, bereinigen
-    const loginPanel = document.getElementById('login-section');
-    loginPanel.classList.remove('error-state');
+    currentCode = ""; updateDisplay();
 }
 
-// Display aktualisieren
 function updateDisplay() {
-    const display = document.getElementById('code-display');
-    // Zeigt Sternchen für eingegebene Zahlen und Unterstriche für leere Stellen
-    display.innerText = "* ".repeat(currentCode.length) + "_ ".repeat(4 - currentCode.length);
+    document.getElementById('code-display').innerText = "* ".repeat(currentCode.length) + "_ ".repeat(4 - currentCode.length);
 }
 
-// Code prüfen
 function checkCode() {
-    const loginPanel = document.getElementById('login-section');
-
     if (currentCode === CORRECT_CODE) {
-        // CODE RICHTIG!
-        startBootSequence();
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('app-content').classList.remove('hidden');
+        // Lädt das Standard-Modul beim Start
+        switchModule('ebay-finder', document.querySelector('.nav-btn')); 
     } else {
-        // CODE FALSCH! Fehler-Animation auslösen
-        loginPanel.classList.add('error-state');
-        document.getElementById('code-display').innerText = "ERR!";
-        
-        // Nach 1 Sekunde wieder normaler Zustand
-        setTimeout(() => {
-            clearCode();
-        }, 1000);
+        clearCode();
     }
 }
 
-// Boot-Sequenz (Ladebalken)
-function startBootSequence() {
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('loading-section').classList.remove('hidden');
+// NEU: Steuert das Footer-Menü und den Header
+const moduleInfo = {
+    'ebay-finder': {
+        title: "EBAY // NISCHEN-SCAN",
+        desc: "Prüft das Angebot auf eBay. Zeigt dir an, wie viele AKTIVE ANGEBOTE deine Konkurrenten zu einem Keyword geschaltet haben. Wenig Angebote = Deine Marktlücke."
+    },
+    'sold-gap': {
+        title: "EBAY // TREND-ANALYSE",
+        desc: "[MODUL IN ENTWICKLUNG] Analysiert verkaufte Artikel der letzten 90 Tage, um echte Nachfrage zu erkennen."
+    },
+    'settings': {
+        title: "SYSTEM // CONFIG",
+        desc: "API-Keys und Verbindungsparameter für den Server-Uplink einrichten."
+    }
+};
 
-    let progress = 0;
-    const progressBar = document.getElementById('progress-bar');
-    const percentText = document.getElementById('loading-percent');
-    const statusText = document.getElementById('loading-text');
+async function switchModule(moduleName, btnElement) {
+    // Buttons optisch umschalten
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    if(btnElement) btnElement.classList.add('active');
 
-    // Hacker-ähnliche Lade-Phrasen
-    const loadingPhrases = [
-        "Bypassing mainframe...",
-        "Connecting to eBay API...",
-        "Decrypting market data...",
-        "Loading GUI modules..."
-    ];
+    // Header Texte anpassen
+    document.getElementById('module-title').innerText = moduleInfo[moduleName].title;
+    document.getElementById('module-desc').innerText = moduleInfo[moduleName].desc;
 
-    // Simulierter, leicht unregelmäßiger Ladevorgang
-    const loadingInterval = setInterval(() => {
-        // Zufälliger Fortschritt zwischen 1 und 5 Prozent
-        progress += Math.floor(Math.random() * 5) + 1;
-        
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(loadingInterval);
-            
-            // Ladevorgang beendet
-            setTimeout(() => {
-                document.getElementById('loading-section').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                loadModule('ebay-finder'); // Lädt dein Analyse-Tool
-            }, 500);
-        }
-
-        // UI Updaten
-        progressBar.style.width = progress + "%";
-        percentText.innerText = progress + "%";
-
-        // Text passend zum Fortschritt ändern
-        if (progress === 25) statusText.innerText = loadingPhrases[1];
-        if (progress === 50) statusText.innerText = loadingPhrases[2];
-        if (progress === 75) statusText.innerText = loadingPhrases[3];
-
-    }, 100); // Alle 100ms aktualisieren
-}
-
-// Modul-Loader (lädt später deine Such-Dateien)
-async function loadModule(moduleName) {
+    // Modul laden
     const container = document.getElementById('tool-container');
-    container.innerHTML = `<div class='animate-pulse text-xs opacity-50'>[SYSTEM]: Fetching ${moduleName}...</div>`;
+    container.innerHTML = `<div class='flex justify-center items-center h-full text-xs opacity-50 animate-pulse'>[SYSTEM]: FETCHING DATA...</div>`;
     
-    setTimeout(async () => {
-        try {
-            const response = await fetch(`./modules/${moduleName}.html`);
-            if (!response.ok) throw new Error("File not found");
-            const html = await response.text();
-            container.innerHTML = html;
-            
-            const script = document.createElement('script');
-            script.src = `./modules/${moduleName}.js`;
-            document.body.appendChild(script);
-        } catch (err) {
-            container.innerHTML = `
-                <div class='border border-red-600 bg-red-900/30 p-4 text-red-500'>
-                    [FATAL ERROR]: Modul '${moduleName}' nicht gefunden.<br>
-                    Bitte stelle sicher, dass der Ordner /modules existiert.
-                </div>`;
-        }
-    }, 600);
+    try {
+        const response = await fetch(`./modules/${moduleName}.html`);
+        if (!response.ok) throw new Error("Not found");
+        container.innerHTML = await response.text();
+        
+        const script = document.createElement('script');
+        script.src = `./modules/${moduleName}.js`;
+        document.body.appendChild(script);
+    } catch (err) {
+        container.innerHTML = `<div class='p-4 text-red-500 text-xs'>[ERR]: MODUL OFFLINE ODER NICHT GEFUNDEN.</div>`;
+    }
 }
