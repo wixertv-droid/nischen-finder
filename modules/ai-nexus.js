@@ -14,7 +14,7 @@ async function startAiScan() {
     resultsDiv.innerHTML = `
         <div class='flex flex-col items-center justify-center h-full mt-10 gap-3'>
             <div class='w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Neural Uplink: Gen 2.0 Analyzing ${input}...</div>
+            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Neural Uplink: Gen 2.5 Analyzing ${input}...</div>
         </div>`;
 
     try {
@@ -25,8 +25,8 @@ async function startAiScan() {
         2. RISIKEN (Gefahren?)
         3. IDEEN (Produktvorschläge?)`;
 
-        // Der Sweetspot: Gemini 2.0 Flash (Stabil, verfügbar, schnell)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${token}`;
+        // HIER IST DIE MAGIE: Wir nutzen jetzt das für neue Nutzer freigegebene Gemini 2.5 Flash
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${token}`;
 
         const response = await fetch(url, {
             method: 'POST',
@@ -42,7 +42,7 @@ async function startAiScan() {
         if (data.error) {
             let errorMsg = data.error.message;
             if (data.error.code === 503) {
-                errorMsg = "Google Server sind aktuell überlastet. Warte ein paar Sekunden und klicke nochmal.";
+                errorMsg = "Google Server (Gen 2.5) sind gerade überlastet. Warte 10 Sekunden und klicke nochmal.";
             }
             throw new Error(`API_RESPONSE: ${errorMsg} (Code: ${data.error.code})`);
         }
@@ -62,7 +62,7 @@ async function startAiScan() {
             <div class="border-l-2 border-l-green-500 bg-black/60 p-4 leading-relaxed font-mono shadow-[0_0_20px_rgba(0,255,65,0.1)]">
                 <div class="font-bold text-sm text-white tracking-widest uppercase mb-4 border-b border-green-900/50 pb-2 flex justify-between">
                     <span>TARGET: ${input}</span>
-                    <span class="text-green-500 text-[10px]">[UPLINK_GEMINI_2.0]</span>
+                    <span class="text-green-500 text-[10px]">[UPLINK_GEMINI_2.5]</span>
                 </div>
                 <div class="text-[11px] text-green-400">
                     ${aiOutput}
@@ -82,7 +82,7 @@ async function startAiScan() {
                 <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_FAILURE]</div>
                 <div class='mb-2'>CAUSE: ${error.message}</div>
                 <div class='p-2 bg-black/40 border border-red-500/30 text-white'>
-                    Wenn hier immer noch 503 steht, zwingt Google Gratis-Nutzer gerade in die Warteschlange. Klicke einfach 2-3 mal im Abstand von 10 Sekunden auf den Button, dann rutschst du meistens durch!
+                    TIPP: Wenn hier 503 steht, zwingt Google Gratis-Nutzer gerade in die Warteschlange. Einfach nochmal klicken!
                 </div>
             </div>`;
     }
