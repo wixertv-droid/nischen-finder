@@ -1,24 +1,33 @@
-<div class="flex flex-col h-full overflow-hidden p-3 gap-3">
-    <div class="bg-black/40 border border-green-800 p-3 relative h-full flex flex-col overflow-y-auto custom-scrollbar">
+<div class="flex flex-col h-full overflow-hidden p-4 gap-4">
+    <div class="text-[11px] text-green-300 mb-2 leading-relaxed border-b border-green-900/50 pb-2 flex-shrink-0">
+        <strong class="text-white block mb-1">SYSTEM UPLINKS:</strong> Keys werden lokal auf deinem Gerät gespeichert. Niemand sonst hat Zugriff.
+    </div>
+
+    <div class="flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-10">
         
-        <div class="text-[10px] text-green-300 mb-4 leading-relaxed border-b border-green-900/50 pb-2">
-            <strong class="text-white">SYSTEM UPLINKS:</strong> Keys werden lokal auf deinem Gerät gespeichert.
+        <div class="flex flex-col gap-2">
+            <label class="text-[10px] uppercase tracking-widest text-green-500 font-bold">EBAY APP ID (Client ID):</label>
+            <input type="text" id="ebay-app-id" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-3 focus:outline-none focus:border-green-400 font-mono text-[10px]" placeholder="App ID hier einfügen..." />
         </div>
-        
-        <label class="text-[10px] text-green-500 tracking-widest mb-1 block">EBAY OAUTH TOKEN:</label>
-        <textarea id="api-token" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-2 h-16 focus:outline-none focus:border-green-400 font-mono text-[10px] resize-none mb-4" placeholder="eBay Token..."></textarea>
 
-        <label class="text-[10px] text-green-500 tracking-widest mb-1 block">GOOGLE GEMINI API KEY:</label>
-        <textarea id="ai-token" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-2 h-12 focus:outline-none focus:border-green-400 font-mono text-[10px] resize-none mb-4" placeholder="AI Key hier einfügen..."></textarea>
+        <div class="flex flex-col gap-2">
+            <label class="text-[10px] uppercase tracking-widest text-green-500 font-bold">EBAY CERT ID (Client Secret):</label>
+            <input type="text" id="ebay-cert-id" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-3 focus:outline-none focus:border-green-400 font-mono text-[10px]" placeholder="Cert ID hier einfügen..." />
+        </div>
 
-        <button onclick="saveSettings()" class="hud-btn w-full py-3 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black mb-4">
+        <div class="flex flex-col gap-2 mt-2">
+            <label class="text-[10px] uppercase tracking-widest text-green-500 font-bold">GOOGLE GEMINI API KEY:</label>
+            <input type="text" id="ai-key" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-3 focus:outline-none focus:border-green-400 font-mono text-[10px]" placeholder="AI Key hier einfügen..." />
+        </div>
+
+        <button onclick="saveSettings()" class="hud-btn w-full py-4 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black mt-2">
             CONFIG SPEICHERN
         </button>
 
-        <div class="mt-auto border border-green-900/50 p-3 bg-black/80 text-center flex flex-col gap-2">
-            <div class="text-[10px] text-green-600 tracking-widest">NETZWERK STATUS:</div>
-            <div id="status-ebay" class="text-xs font-bold text-red-500">[ EBAY: OFFLINE ]</div>
-            <div id="status-ai" class="text-xs font-bold text-red-500">[ GEMINI: OFFLINE ]</div>
+        <div class="mt-6 border border-green-900/50 bg-black/40 p-4 flex flex-col items-center gap-2">
+            <div class="text-[10px] text-green-600 tracking-widest mb-2">NETZWERK STATUS:</div>
+            <div id="status-ebay" class="text-[11px] font-bold tracking-widest text-red-500">[ EBAY: OFFLINE ]</div>
+            <div id="status-ai" class="text-[11px] font-bold tracking-widest text-red-500">[ AI_CORE: OFFLINE ]</div>
         </div>
     </div>
 </div>
