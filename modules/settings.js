@@ -1,6 +1,5 @@
 // modules/settings.js
 
-// Wird aufgerufen, sobald das Modul geladen wird
 function loadSettings() {
     const ebayAppId = localStorage.getItem('ai_dww_ebay_app_id');
     const ebayCertId = localStorage.getItem('ai_dww_ebay_cert_id');
@@ -18,7 +17,6 @@ function saveSettings() {
     const ebayCertId = document.getElementById('ebay-cert-id').value.trim();
     const aiKey = document.getElementById('ai-key').value.trim();
 
-    // Speichern im lokalen Browser-Speicher
     if (ebayAppId) localStorage.setItem('ai_dww_ebay_app_id', ebayAppId);
     if (ebayCertId) localStorage.setItem('ai_dww_ebay_cert_id', ebayCertId);
     if (aiKey) localStorage.setItem('ai_dww_token', aiKey);
@@ -58,5 +56,5 @@ function updateStatusDisplay(hasEbay, hasAi) {
     }
 }
 
-// Führt die Lade-Funktion aus, wenn das Skript injiziert wird
+// Lade-Funktion ausführen
 loadSettings();
