@@ -3,8 +3,6 @@
 // 1. Funktion: Holt sich einen frischen Token direkt von eBay
 async function generateLiveToken(appId, certId) {
     const credentials = btoa(`${appId}:${certId}`);
-    
-    // Wir nutzen einen stabilen Proxy, um die eBay-Sicherheitsserver zu passieren
     const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.ebay.com/identity/v1/oauth2/token');
     
     const params = new URLSearchParams();
@@ -20,10 +18,7 @@ async function generateLiveToken(appId, certId) {
         body: params.toString()
     });
 
-    if (!response.ok) {
-        throw new Error(`eBay verweigert Zugriff (Code: ${response.status}). Sind die Keys ohne Leerzeichen kopiert?`);
-    }
-
+    if (!response.ok) throw new Error(`eBay verweigert Token Zugriff (Code: ${response.status})`);
     const data = await response.json();
     return data.access_token;
 }
@@ -32,22 +27,19 @@ async function generateLiveToken(appId, certId) {
 async function startNischenScan() {
     const resultsDiv = document.getElementById('nischen-results');
     
-    // MASSIVES SICHERHEITSNETZ: Fängt alle Abstürze ab und zeigt sie an
     try {
         const inputField = document.getElementById('nischen-input');
         const text = inputField.value.trim();
 
-        // Keys aus dem System-Reiter holen
         const appId = localStorage.getItem('ai_dww_ebay_app_id');
         const certId = localStorage.getItem('ai_dww_ebay_cert_id');
 
         if (!appId || !certId) {
-            resultsDiv.innerHTML = "<div class='text-red-500 text-[11px] border border-red-900 p-3 bg-red-900/20 text-center mt-4'>[FATAL ERR] KEINE EBAY KEYS GEFUNDEN. Bitte im Reiter SYSTEM eintragen.</div>";
+            resultsDiv.innerHTML = "<div class='text-red-500 text-[11px] border border-red-900 p-3 bg-red-900/20 text-center mt-4'>[FATAL ERR] KEINE EBAY KEYS GEFUNDEN.</div>";
             return;
         }
         if (!text) return;
 
-        // Eingabe in einzelne Zeilen aufteilen
         const keywords = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
         if (keywords.length === 0) return;
 
@@ -59,11 +51,9 @@ async function startNischenScan() {
                 </div>
             </div>`;
 
-        // Token generieren
         const token = await generateLiveToken(appId, certId);
         resultsDiv.innerHTML = ''; 
 
-        // Platzhalter für jede Suchanfrage erstellen
         for (let kw of keywords) {
             const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
             resultsDiv.innerHTML += `
@@ -72,25 +62,28 @@ async function startNischenScan() {
                 </div>`;
         }
 
-        // Alle Suchbegriffe abfragen
         for (let kw of keywords) {
             const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
             try {
-                const searchUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE`;
+                // HIER IST DER FIX: Die Suchanfrage geht jetzt auch durch den sicheren Proxy-Tunnel!
+                const targetUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE`;
+                const proxySearchUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
                 
-                const res = await fetch(searchUrl, {
+                const res = await fetch(proxySearchUrl, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE'
                     }
                 });
 
-                if (!res.ok) throw new Error('API Timeout oder Rate Limit');
-                const data = await res.json();
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.errors ? errData.errors[0].message : `HTTP ${res.status}`);
+                }
                 
+                const data = await res.json();
                 const totalItems = data.total || 0;
 
-                // Status-Ampel Logik
                 let colorClass = 'text-[#00ff41]';
                 let statusText = '[ PERFEKT - KAUM KONKURRENZ ]';
                 
@@ -114,16 +107,16 @@ async function startNischenScan() {
                 `;
 
             } catch (e) {
+                // Gibt jetzt den exakten Fehlergrund aus, falls etwas schiefgeht!
                 document.getElementById(id).innerHTML = `
                     <div class="flex justify-between border-b border-red-900/50 pb-2 mb-2">
                         <strong class="text-sm text-white">${kw.toUpperCase()}</strong>
-                        <span class="text-red-500 text-[9px] font-bold">[ SCAN FEHLGESCHLAGEN ]</span>
+                        <span class="text-red-500 text-[9px] font-bold">FEHLER: ${e.message}</span>
                     </div>`;
             }
         }
 
     } catch (fatalError) {
-        // Falls der Token-Handshake fehlschlägt, sehen wir hier genau WARUM
         resultsDiv.innerHTML = `
             <div class='p-4 border border-red-900 bg-red-900/10 text-red-500 font-mono text-[10px]'>
                 <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_CRASH]</div>
