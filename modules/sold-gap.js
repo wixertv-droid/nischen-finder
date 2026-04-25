@@ -1,68 +1,152 @@
 // modules/sold-gap.js
-async function startTrendScan() {
-    const input = document.getElementById('trend-input').value.trim();
-    const resultsDiv = document.getElementById('trend-results');
-    const token = localStorage.getItem('ebay_dww_token');
+
+// 1. eBay Live-Token generieren (exakt wie im Nischen-Modul)
+async function generateLiveToken(appId, certId) {
+    const credentials = btoa(`${appId}:${certId}`);
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.ebay.com/identity/v1/oauth2/token');
     
-    if (!token) {
-        resultsDiv.innerHTML = "<div class='text-red-500 text-xs text-center mt-4 border border-red-900 p-2 bg-red-900/20'>[FATAL ERR] KEIN API-TOKEN GEFUNDEN.</div>";
+    const params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('scope', 'https://api.ebay.com/oauth/api_scope');
+
+    const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Basic ${credentials}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+    });
+
+    if (!response.ok) throw new Error(`eBay Token verweigert (Code: ${response.status})`);
+    const data = await response.json();
+    return data.access_token;
+}
+
+// 2. Hauptfunktion für die Preisanalyse
+async function startTrendScan() {
+    const inputField = document.getElementById('trend-input');
+    const resultsDiv = document.getElementById('trend-results');
+    const kw = inputField.value.trim();
+
+    const appId = localStorage.getItem('ai_dww_ebay_app_id');
+    const certId = localStorage.getItem('ai_dww_ebay_cert_id');
+
+    if (!appId || !certId) {
+        resultsDiv.innerHTML = "<div class='text-red-500 text-[11px] border border-red-900 p-3 bg-red-900/20 text-center mt-4'>[FATAL ERR] KEINE EBAY KEYS GEFUNDEN.</div>";
         return;
     }
-    if (!input) return;
+    if (!kw) return;
 
-    resultsDiv.innerHTML = `<div class='text-green-400 text-xs text-center mt-4 animate-pulse'>[UPLINK ACTIVE] Requesting historical data...</div>`;
+    resultsDiv.innerHTML = `
+        <div class='flex flex-col items-center justify-center mt-10 gap-3'>
+            <div class='w-8 h-8 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div>
+            <div class='text-[#00ff41] text-[10px] animate-pulse tracking-[0.2em] font-mono text-center uppercase'>
+                Analysiere Marktwerte für '${kw}'...<br>Extrahiere Preisdaten...
+            </div>
+        </div>`;
 
     try {
-        // Abfrage 1: Aktive Angebote (Genau wie beim Finder)
-        const activeUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(input)}&limit=1`;
-        const proxyActive = `https://corsproxy.io/?${encodeURIComponent(activeUrl)}`;
+        const token = await generateLiveToken(appId, certId);
+
+        // Wir rufen die Top 50 Ergebnisse ab, um einen guten Durchschnitt zu berechnen
+        const targetUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE&limit=50`;
+        const proxySearchUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
         
-        const resActive = await fetch(proxyActive, {
-            headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE' }
+        const res = await fetch(proxySearchUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE'
+            }
         });
+
+        if (!res.ok) throw new Error(`API Fehler: HTTP ${res.status}`);
+        const data = await res.json();
         
-        if (!resActive.ok) throw new Error("API Blockade");
-        const dataActive = await resActive.json();
-        const active = dataActive.total || 1; // 1 statt 0 um Division durch 0 zu vermeiden
+        const totalItems = data.total || 0;
+        const items = data.itemSummaries || [];
 
-        // Abfrage 2: Verkaufte Artikel (Simulation des API-Limits - erfordert eigentlich Trading API)
-        // Hinweis: Die eBay Browse API liefert "Sold" nicht nativ an Frontend-Nutzer aus.
-        // Wir setzen hier einen berechneten Schätzwert anhand der aktiven Dichte ein, 
-        // bis ein echtes Backend verfügbar ist.
-        const soldEstimate = Math.floor(active * (Math.random() * 2.5)); 
-        
-        const ratio = (soldEstimate / active).toFixed(1); 
-        const isTrend = ratio > 1.5; 
+        if (items.length === 0) {
+            resultsDiv.innerHTML = `
+                <div class='p-4 border border-yellow-600 bg-yellow-900/20 text-yellow-500 font-mono text-[11px]'>
+                    Keine Angebote für "${kw}" auf eBay DE gefunden. Eine absolute Marktlücke oder Tippfehler?
+                </div>`;
+            return;
+        }
 
-        let boxStyle, statusText, actionText;
+        // Preise analysieren
+        let prices = [];
+        items.forEach(item => {
+            if (item.price && item.price.value) {
+                prices.push(parseFloat(item.price.value));
+            }
+        });
 
-        if (isTrend) {
-            boxStyle = 'border-l-4 border-l-green-400 bg-green-900/20';
-            statusText = `<span class="text-white font-bold">${soldEstimate} verkauft (Schätzung) vs. ${active} aktiv</span>`;
-            actionText = '<span class="bg-green-500 text-black px-2 py-0.5 text-[9px] font-bold rounded">HIGH DEMAND!</span>';
+        if (prices.length === 0) throw new Error("Keine Preisdaten in den Ergebnissen gefunden.");
+
+        // Berechnungen
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+        // Bewertung des Marktes
+        let trendVerdict = "";
+        let verdictColor = "";
+
+        if (avgPrice < 15 && totalItems > 500) {
+            trendVerdict = "[ PREISKAMPF / GERINGE MARGE ]";
+            verdictColor = "text-red-500";
+        } else if (avgPrice >= 15 && avgPrice <= 50 && totalItems < 1000) {
+            trendVerdict = "[ GUTE MARGE / SWEET SPOT ]";
+            verdictColor = "text-[#00ff41]";
+        } else if (avgPrice > 50) {
+            trendVerdict = "[ HIGH TICKET ITEM / LOHNT SICH ]";
+            verdictColor = "text-yellow-400";
         } else {
-            boxStyle = 'border-l-4 border-l-green-900/50 bg-black/40 opacity-70';
-            statusText = `<span class="text-green-600">${soldEstimate} verkauft (Schätzung) vs. ${active} aktiv</span>`;
-            actionText = '<span class="text-red-500 text-[9px] border border-red-900/50 px-1">LOW DEMAND</span>';
+            trendVerdict = "[ DURCHSCHNITTLICH ]";
+            verdictColor = "text-green-500";
         }
 
         resultsDiv.innerHTML = `
-            <div class="p-2 border border-green-900/30 ${boxStyle} transition-all">
-                <div class="flex justify-between items-start mb-1">
-                    <div class="font-bold text-sm tracking-wide text-green-300 uppercase">${input}</div>
-                    ${actionText}
+            <div class="border-l-2 border-l-[#00ff41] bg-black/60 p-4 shadow-[inset_0_0_20px_rgba(0,255,65,0.05)]">
+                <div class="font-bold text-sm text-white tracking-widest uppercase mb-4 border-b border-green-900/50 pb-2 flex justify-between">
+                    <span>TARGET: ${kw}</span>
+                    <span class="text-[#00ff41] text-[10px]">[ANALYSIS_COMPLETE]</span>
                 </div>
-                <div class="text-[11px] text-green-500">
-                    Bilanz: ${statusText}. Auf 1 Angebot kommen ca. ${ratio} Verkäufe.
+                
+                <div class="mb-4">
+                    <span class="${verdictColor} text-[11px] font-bold tracking-widest uppercase block mb-1">${trendVerdict}</span>
+                    <span class="text-[10px] text-green-600">Basierend auf den Top-Ergebnissen in DE.</span>
+                </div>
+
+                <div class="space-y-3 text-[12px]">
+                    <div class="flex justify-between border-b border-green-900/30 pb-1">
+                        <span class="text-green-400 opacity-80">Durchschnittspreis:</span>
+                        <b class="text-white text-sm">${avgPrice.toFixed(2)} €</b>
+                    </div>
+                    <div class="flex justify-between border-b border-green-900/30 pb-1">
+                        <span class="text-green-400 opacity-80">Günstigster Preis:</span>
+                        <b class="text-white">${minPrice.toFixed(2)} €</b>
+                    </div>
+                    <div class="flex justify-between border-b border-green-900/30 pb-1">
+                        <span class="text-green-400 opacity-80">Höchster Preis:</span>
+                        <b class="text-white">${maxPrice.toFixed(2)} €</b>
+                    </div>
+                    <div class="flex justify-between mt-4 pt-2">
+                        <span class="text-green-500 opacity-60 text-[10px]">Aktive Konkurrenten gesamt:</span>
+                        <span class="text-green-500 text-[10px]">${totalItems.toLocaleString('de-DE')}</span>
+                    </div>
                 </div>
             </div>
         `;
+        
+        inputField.value = "";
 
     } catch (error) {
         resultsDiv.innerHTML = `
-            <div class="p-2 border-l-4 border-l-red-500 bg-red-900/20 text-red-400 text-[11px] mb-2 mt-4">
-                [ERR] Verbindung abgelehnt. Token abgelaufen oder Berechtigung für diese Anfrage verweigert.
-            </div>
-        `;
+            <div class='p-4 border border-red-900 bg-red-900/10 text-red-500 font-mono text-[10px]'>
+                <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_CRASH]</div>
+                <div>CAUSE: ${error.message}</div>
+            </div>`;
     }
 }
