@@ -1,27 +1,22 @@
 <div class="flex flex-col h-full overflow-hidden p-3 gap-3">
-    <div class="bg-black/40 border border-green-800 p-3 relative">
+    <div class="bg-black/40 border border-green-800 p-3 relative flex-shrink-0">
         <div class="text-[10px] text-green-300 mb-2 leading-relaxed">
-            <strong class="text-white">ZIEL:</strong> Finde Produkte mit hoher Nachfrage. Das System vergleicht <strong class="text-white">verkaufte Artikel (letzte 90 Tage)</strong> mit aktiven Angeboten.
+            <strong class="text-white">TREND SCANNER:</strong> Analysiere das echte Preis-Niveau und das Marktpotenzial eines Produkts auf eBay Deutschland.
         </div>
-        
-        <textarea id="trend-input" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-2 h-16 focus:outline-none focus:border-green-400 font-mono text-sm resize-none custom-scrollbar" placeholder="Suchbegriff eingeben..."></textarea>
-
-        <div class="mt-2 flex gap-2">
-            <button onclick="startTrendScan()" class="hud-btn flex-grow py-2 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black">
-                TREND-SCAN STARTEN
-            </button>
-        </div>
+        <input type="text" id="trend-input" class="w-full bg-black/60 border border-green-900/50 text-green-400 p-3 focus:outline-none focus:border-green-400 font-mono text-sm mb-2" placeholder="> Produkt eingeben (z.B. Matcha Besen)..." />
+        <button onclick="startTrendScan()" class="hud-btn w-full py-3 text-sm font-bold tracking-widest hover:bg-green-500 hover:text-black">
+            PREIS- & TREND-ANALYSE
+        </button>
     </div>
 
     <div class="flex-grow bg-black/40 border border-green-800 flex flex-col overflow-hidden relative">
-        <div class="bg-green-900/30 p-2 border-b border-green-800 text-[9px] tracking-wider text-green-400 flex justify-between">
-            <span>[ TREND-ANALYSE ]</span>
-            <span>METRIK: VERKAUFS-RATIO</span>
+        <div class="bg-green-900/30 p-2 border-b border-green-800 text-[9px] tracking-wider text-green-400 flex justify-between flex-shrink-0">
+            <span>[ EBAY MARKET PRICING ]</span>
+            <span>LIVE UPLINK</span>
         </div>
-
-        <div id="trend-results" class="flex-grow overflow-y-auto custom-scrollbar p-2 flex flex-col gap-2">
-            <div class="text-xs text-green-800 text-center mt-6 font-mono opacity-50">
-                Warte auf Eingabe...
+        <div id="trend-results" class="flex-grow overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3 font-mono text-sm text-green-500 pb-20">
+            <div class="text-xs text-green-800 text-center mt-6 opacity-50 uppercase tracking-widest">
+                System ready.<br>Awaiting Target...
             </div>
         </div>
     </div>
