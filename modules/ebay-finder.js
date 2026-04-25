@@ -2,10 +2,9 @@
 
 // 1. Funktion: Holt sich einen frischen Token direkt von eBay
 async function generateLiveToken(appId, certId) {
-    // Base64 Verschlüsselung deiner Keys für den Server-Handshake
     const credentials = btoa(`${appId}:${certId}`);
     
-    // Da eBay hier Server-to-Server fordert, nutzen wir einen sicheren CORS-Proxy für die Frontend-App
+    // Wir nutzen einen stabilen Proxy, um die eBay-Sicherheitsserver zu passieren
     const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://api.ebay.com/identity/v1/oauth2/token');
     
     const params = new URLSearchParams();
@@ -22,45 +21,47 @@ async function generateLiveToken(appId, certId) {
     });
 
     if (!response.ok) {
-        throw new Error('eBay Token-Server verweigert den Zugriff. Sind App ID und Cert ID korrekt kopiert?');
+        throw new Error(`eBay verweigert Zugriff (Code: ${response.status}). Sind die Keys ohne Leerzeichen kopiert?`);
     }
 
     const data = await response.json();
-    return data.access_token; // Gibt den 2-Stunden-Token zurück
+    return data.access_token;
 }
 
 // 2. Hauptfunktion: Führt den Such-Scan aus
 async function startNischenScan() {
-    const inputField = document.getElementById('nischen-input');
     const resultsDiv = document.getElementById('nischen-results');
-    const text = inputField.value.trim();
-
-    // Keys aus dem System-Reiter holen
-    const appId = localStorage.getItem('ai_dww_ebay_app_id');
-    const certId = localStorage.getItem('ai_dww_ebay_cert_id');
-
-    if (!appId || !certId) {
-        resultsDiv.innerHTML = "<div class='text-red-500 text-[11px] border border-red-900 p-3 bg-red-900/20 text-center mt-4'>[FATAL ERR] KEINE EBAY KEYS GEFUNDEN. Bitte im Reiter SYSTEM eintragen.</div>";
-        return;
-    }
-    if (!text) return;
-
-    // Eingabe in einzelne Zeilen/Suchbegriffe aufteilen
-    const keywords = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
-    if (keywords.length === 0) return;
-
-    resultsDiv.innerHTML = `
-        <div class='flex flex-col items-center justify-center mt-8 gap-3'>
-            <div class='w-8 h-8 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div>
-            <div class='text-[#00ff41] text-[10px] animate-pulse tracking-[0.2em] font-mono text-center uppercase'>
-                Handshake mit eBay Server...<br>Generiere Live-Token...
-            </div>
-        </div>`;
-
+    
+    // MASSIVES SICHERHEITSNETZ: Fängt alle Abstürze ab und zeigt sie an
     try {
+        const inputField = document.getElementById('nischen-input');
+        const text = inputField.value.trim();
+
+        // Keys aus dem System-Reiter holen
+        const appId = localStorage.getItem('ai_dww_ebay_app_id');
+        const certId = localStorage.getItem('ai_dww_ebay_cert_id');
+
+        if (!appId || !certId) {
+            resultsDiv.innerHTML = "<div class='text-red-500 text-[11px] border border-red-900 p-3 bg-red-900/20 text-center mt-4'>[FATAL ERR] KEINE EBAY KEYS GEFUNDEN. Bitte im Reiter SYSTEM eintragen.</div>";
+            return;
+        }
+        if (!text) return;
+
+        // Eingabe in einzelne Zeilen aufteilen
+        const keywords = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+        if (keywords.length === 0) return;
+
+        resultsDiv.innerHTML = `
+            <div class='flex flex-col items-center justify-center mt-8 gap-3'>
+                <div class='w-8 h-8 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div>
+                <div class='text-[#00ff41] text-[10px] animate-pulse tracking-[0.2em] font-mono text-center uppercase'>
+                    Handshake mit eBay Server...<br>Generiere Live-Token...
+                </div>
+            </div>`;
+
         // Token generieren
         const token = await generateLiveToken(appId, certId);
-        resultsDiv.innerHTML = ''; // Lade-Animation löschen
+        resultsDiv.innerHTML = ''; 
 
         // Platzhalter für jede Suchanfrage erstellen
         for (let kw of keywords) {
@@ -71,26 +72,25 @@ async function startNischenScan() {
                 </div>`;
         }
 
-        // Alle Suchbegriffe einzeln abfragen
+        // Alle Suchbegriffe abfragen
         for (let kw of keywords) {
             const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
             try {
-                // Die offizielle eBay Browse API anfunken (Sucht in Deutschland)
                 const searchUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE`;
                 
                 const res = await fetch(searchUrl, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE' // Erzwingt den deutschen Markt
+                        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE'
                     }
                 });
 
-                if (!res.ok) throw new Error('API Timeout');
+                if (!res.ok) throw new Error('API Timeout oder Rate Limit');
                 const data = await res.json();
                 
                 const totalItems = data.total || 0;
 
-                // Status-Ampel Logik (Bewertet die Konkurrenz)
+                // Status-Ampel Logik
                 let colorClass = 'text-[#00ff41]';
                 let statusText = '[ PERFEKT - KAUM KONKURRENZ ]';
                 
@@ -122,11 +122,12 @@ async function startNischenScan() {
             }
         }
 
-    } catch (error) {
+    } catch (fatalError) {
+        // Falls der Token-Handshake fehlschlägt, sehen wir hier genau WARUM
         resultsDiv.innerHTML = `
             <div class='p-4 border border-red-900 bg-red-900/10 text-red-500 font-mono text-[10px]'>
-                <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[CONNECTION REFUSED]</div>
-                <div>${error.message}</div>
+                <div class='font-bold mb-2 border-b border-red-900 pb-1 uppercase'>[SYSTEM_CRASH]</div>
+                <div>CAUSE: ${fatalError.message}</div>
             </div>`;
     }
 }
