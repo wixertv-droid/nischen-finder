@@ -1,42 +1,62 @@
+// modules/settings.js
+
+// Wird aufgerufen, sobald das Modul geladen wird
 function loadSettings() {
-    const token = localStorage.getItem('ebay_dww_token');
-    const aiToken = localStorage.getItem('ai_dww_token');
-    
-    if (token) document.getElementById('api-token').value = token;
-    if (aiToken) document.getElementById('ai-token').value = aiToken;
-    
-    updateStatus('status-ebay', token, 'EBAY');
-    updateStatus('status-ai', aiToken, 'AI_CORE');
+    const ebayAppId = localStorage.getItem('ai_dww_ebay_app_id');
+    const ebayCertId = localStorage.getItem('ai_dww_ebay_cert_id');
+    const aiKey = localStorage.getItem('ai_dww_token');
+
+    if (ebayAppId) document.getElementById('ebay-app-id').value = ebayAppId;
+    if (ebayCertId) document.getElementById('ebay-cert-id').value = ebayCertId;
+    if (aiKey) document.getElementById('ai-key').value = aiKey;
+
+    updateStatusDisplay(ebayAppId && ebayCertId, aiKey);
 }
 
 function saveSettings() {
-    const token = document.getElementById('api-token').value.trim();
-    const aiToken = document.getElementById('ai-token').value.trim();
+    const ebayAppId = document.getElementById('ebay-app-id').value.trim();
+    const ebayCertId = document.getElementById('ebay-cert-id').value.trim();
+    const aiKey = document.getElementById('ai-key').value.trim();
+
+    // Speichern im lokalen Browser-Speicher
+    if (ebayAppId) localStorage.setItem('ai_dww_ebay_app_id', ebayAppId);
+    if (ebayCertId) localStorage.setItem('ai_dww_ebay_cert_id', ebayCertId);
+    if (aiKey) localStorage.setItem('ai_dww_token', aiKey);
+
+    const btn = document.querySelector('button[onclick="saveSettings()"]');
+    const originalText = btn.innerText;
     
-    // eBay Speichern
-    if (token) localStorage.setItem('ebay_dww_token', token);
-    else localStorage.removeItem('ebay_dww_token');
+    btn.innerText = "SAVED!";
+    btn.classList.add('bg-[#00ff41]', 'text-black');
+    
+    updateStatusDisplay(ebayAppId && ebayCertId, aiKey);
 
-    // AI Speichern
-    if (aiToken) localStorage.setItem('ai_dww_token', aiToken);
-    else localStorage.removeItem('ai_dww_token');
-
-    document.getElementById('status-ebay').innerHTML = "<span class='text-green-400 animate-pulse'>VERIFYING...</span>";
-    document.getElementById('status-ai').innerHTML = "<span class='text-green-400 animate-pulse'>VERIFYING...</span>";
-        
     setTimeout(() => {
-        updateStatus('status-ebay', token, 'EBAY');
-        updateStatus('status-ai', aiToken, 'AI_CORE');
-    }, 800);
+        btn.innerText = originalText;
+        btn.classList.remove('bg-[#00ff41]', 'text-black');
+    }, 1500);
 }
 
-function updateStatus(elementId, hasToken, name) {
-    const display = document.getElementById(elementId);
-    if (hasToken) {
-        display.innerHTML = `<span class='text-green-400 drop-shadow-[0_0_5px_rgba(0,255,65,0.8)]'>[ ${name}: ONLINE ]</span>`;
+function updateStatusDisplay(hasEbay, hasAi) {
+    const statusEbay = document.getElementById('status-ebay');
+    const statusAi = document.getElementById('status-ai');
+
+    if (hasEbay) {
+        statusEbay.innerText = "[ EBAY: ONLINE ]";
+        statusEbay.className = "text-[11px] font-bold tracking-widest text-[#00ff41]";
     } else {
-        display.innerHTML = `<span class='text-red-500'>[ ${name}: OFFLINE ]</span>`;
+        statusEbay.innerText = "[ EBAY: OFFLINE ]";
+        statusEbay.className = "text-[11px] font-bold tracking-widest text-red-500";
+    }
+
+    if (hasAi) {
+        statusAi.innerText = "[ AI_CORE: ONLINE ]";
+        statusAi.className = "text-[11px] font-bold tracking-widest text-[#00ff41]";
+    } else {
+        statusAi.innerText = "[ AI_CORE: OFFLINE ]";
+        statusAi.className = "text-[11px] font-bold tracking-widest text-red-500";
     }
 }
 
+// Führt die Lade-Funktion aus, wenn das Skript injiziert wird
 loadSettings();
