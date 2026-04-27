@@ -1,16 +1,15 @@
 {
-  "name": "Deutsches Wurstwerk - Market Core",
-  "short_name": "DWW Core",
-  "description": "HUD Interface für eBay Nischen- und Trendanalysen",
+  "name": "MARKET_CORE",
+  "short_name": "MARKET_CORE",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#030a03",
-  "theme_color": "#00ff41",
+  "theme_color": "#030a03",
   "orientation": "portrait",
   "icons": [
     {
       "src": "icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
