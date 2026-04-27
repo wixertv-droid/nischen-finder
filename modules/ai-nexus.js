@@ -14,7 +14,6 @@ window.startAiScan = async function() {
     inputField.value = ""; 
     sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
 
-    // HIER IST DAS PROMPT-UPDATE: Strenge Regel für Copy & Paste Text
     const prompt = `Analysiere die Nische: "${input}" für DACH. Gib NUR valides JSON zurück. 
     Liefere SEHR detaillierte Antworten, besonders bei 'hook' und 'description'.
     {
@@ -36,6 +35,9 @@ window.startAiScan = async function() {
         const rawText = data.candidates[0].content.parts[0].text;
         const d = JSON.parse(rawText.match(/\{[\s\S]*\}/)[0]);
         document.getElementById(loadId).remove();
+
+        // Einzigartige ID für den Kopier-Block, damit immer der richtige Text kopiert wird
+        const descId = 'desc-' + Date.now();
 
         const resultHTML = `
             <div class="bg-black/80 border border-green-900/50 p-4 font-mono text-sm shadow-[0_0_20px_rgba(0,255,65,0.05)] mb-6">
@@ -59,17 +61,41 @@ window.startAiScan = async function() {
                 <div class="mb-5 text-xs text-white bg-green-900/20 p-3 border border-[#00ff41]/30">
                     <b class="text-[#00ff41] block mb-2 uppercase tracking-widest">Video Hook (${d.marketing.platform})</b><span class="leading-relaxed">${d.marketing.hook}</span>
                 </div>
+                
                 <div class="bg-black p-4 text-xs text-green-300 leading-relaxed border border-green-900">
-                    <b class="text-white block mb-3 uppercase tracking-widest border-b border-green-900/50 pb-2">Copy & Paste Produktbeschreibung</b>
-                    <div class="text-white/90 font-sans tracking-wide text-[13px]">${d.description}</div>
+                    <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
+                        <b class="text-white uppercase tracking-widest">Copy & Paste Produktbeschreibung</b>
+                        <button onclick="copyDescText('${descId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
+                            KOPIEREN
+                        </button>
+                    </div>
+                    <div id="${descId}" class="text-white/90 font-sans tracking-wide text-[13px]">${d.description}</div>
                 </div>
             </div>`;
+            
         resultsDiv.insertAdjacentHTML('afterbegin', resultHTML);
         sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
     } catch (e) { 
         document.getElementById(loadId).innerHTML = `<div class="text-red-500 p-4 border border-red-900 bg-red-900/20 text-xs">FEHLER: API Timeout. Bitte versuche es erneut.</div>`; 
         sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
     }
+}
+
+// KOPIER-FUNKTION FÜR DEN BUTTON
+window.copyDescText = function(elementId, btn) {
+    const textToCopy = document.getElementById(elementId).innerText; // .innerText erhält die Absätze sauber!
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "KOPIERT!";
+        btn.classList.add("bg-[#00ff41]", "text-black");
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.remove("bg-[#00ff41]", "text-black");
+        }, 2000);
+    }).catch(err => {
+        console.error("Kopieren fehlgeschlagen: ", err);
+        btn.innerText = "FEHLER";
+    });
 }
 
 // MEMORY SYSTEM
