@@ -14,16 +14,17 @@ window.startAiScan = async function() {
     inputField.value = ""; 
     sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
 
+    // NEU: Zwingt die KI, einen englischen Regie-Prompt für Video-Generatoren zu schreiben
     const prompt = `Analysiere die Nische: "${input}" für DACH. Gib NUR valides JSON zurück. 
-    Liefere SEHR detaillierte Antworten, besonders bei 'hook' und 'description'.
+    Liefere SEHR detaillierte Antworten.
     {
       "marketScore": 85,
       "market": {"trend": "Prognose in 1 Satz", "cpc": "0,50€", "margin": "30%"},
       "psychology": {"target": "Genaue Zielgruppe", "pain": "Welcher Schmerz wird gelöst?"},
-      "marketing": {"platform": "Beste Plattform", "hook": "Detaillierte Idee für erste 3 Sek"},
+      "marketing": {"platform": "Beste Plattform", "videoPrompt": "Schreibe einen hochdetaillierten ENGLISCHEN (!) Text-to-Video Prompt (Regieanweisung) für eine AI (wie Veo, Kling, Sora). Beschreibe eine extrem fesselnde erste Szene (3-5 Sekunden), Kamerabewegung (z.B. Cinematic Pan), Beleuchtung und fotorealistische Details, die das Produkt oder das Problem perfekt in Szene setzen."},
       "seo": ["KW 1", "KW 2", "KW 3", "KW 4", "KW 5", "KW 6", "KW 7", "KW 8", "KW 9", "KW 10", "KW 11", "KW 12", "KW 13", "KW 14", "KW 15", "KW 16", "KW 17", "KW 18", "KW 19", "KW 20"],
       "risks": ["Risiko 1", "Risiko 2"],
-      "description": "Schreibe eine ausführliche, rechtssichere Produktbeschreibung nach der AIDA-Formel. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Es muss ein fließender, direkt kopierbarer Text sein. Nutze HTML <br> für Absätze."
+      "description": "Schreibe eine ausführliche, rechtssichere Produktbeschreibung nach der AIDA-Formel. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Nutze HTML <br> für Absätze."
     }`;
 
     try {
@@ -36,8 +37,8 @@ window.startAiScan = async function() {
         const d = JSON.parse(rawText.match(/\{[\s\S]*\}/)[0]);
         document.getElementById(loadId).remove();
 
-        // Einzigartige ID für den Kopier-Block, damit immer der richtige Text kopiert wird
         const descId = 'desc-' + Date.now();
+        const videoPromptId = 'vid-' + Date.now();
 
         const resultHTML = `
             <div class="bg-black/80 border border-green-900/50 p-4 font-mono text-sm shadow-[0_0_20px_rgba(0,255,65,0.05)] mb-6">
@@ -45,26 +46,39 @@ window.startAiScan = async function() {
                     <strong class="text-white text-lg tracking-widest uppercase">${input}</strong>
                     <span class="text-black bg-[#00ff41] px-2 py-1 text-[10px] font-bold">[ SCAN OK ]</span>
                 </div>
+                
                 <div class="mb-5">
                     <div class="flex justify-between text-xs text-green-400 mb-1"><span class="uppercase tracking-widest">Markt-Potenzial</span><span class="font-bold text-white">${d.marketScore}/100</span></div>
                     <div class="w-full bg-black h-2.5 rounded-sm overflow-hidden border border-green-900"><div class="bg-[#00ff41] h-full" style="width: ${d.marketScore}%"></div></div>
                 </div>
+                
                 <div class="grid grid-cols-2 gap-4 mb-5 text-xs">
                     <div class="border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Trend</div><div class="text-white font-bold">${d.market.trend}</div></div>
                     <div class="border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Marge / CPC</div><div class="text-white font-bold">${d.market.margin} | ${d.market.cpc}</div></div>
                     <div class="col-span-2 border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Zielgruppe & Problem</div><div class="text-white">${d.psychology.target}</div><div class="text-green-400 mt-1 italic">> Löste Schmerz: ${d.psychology.pain}</div></div>
                 </div>
+                
                 <div class="mb-5 border-l-2 border-yellow-500 bg-yellow-900/10 p-3 text-xs">
                     <b class="text-yellow-500 block mb-3 uppercase tracking-widest">Top 20 SEO Keywords</b>
                     <div class="text-white leading-relaxed flex flex-wrap gap-1.5">${d.seo.map(k => `<span class="bg-black border border-yellow-700/50 px-2 py-1 text-[10px] rounded">${k}</span>`).join('')}</div>
                 </div>
-                <div class="mb-5 text-xs text-white bg-green-900/20 p-3 border border-[#00ff41]/30">
-                    <b class="text-[#00ff41] block mb-2 uppercase tracking-widest">Video Hook (${d.marketing.platform})</b><span class="leading-relaxed">${d.marketing.hook}</span>
+                
+                <div class="mb-5 bg-green-900/20 p-4 text-xs leading-relaxed border border-[#00ff41]/50">
+                    <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
+                        <div>
+                            <b class="text-[#00ff41] uppercase tracking-widest block">AI Video Prompt</b>
+                            <span class="text-green-500/70 text-[9px] uppercase">Für Veo, Kling, Runway (${d.marketing.platform})</span>
+                        </div>
+                        <button onclick="copyDescText('${videoPromptId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
+                            KOPIEREN
+                        </button>
+                    </div>
+                    <div id="${videoPromptId}" class="text-white font-sans tracking-wide text-[13px] italic">${d.marketing.videoPrompt}</div>
                 </div>
                 
                 <div class="bg-black p-4 text-xs text-green-300 leading-relaxed border border-green-900">
                     <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
-                        <b class="text-white uppercase tracking-widest">Copy & Paste Produktbeschreibung</b>
+                        <b class="text-white uppercase tracking-widest">Listing Text (AIDA)</b>
                         <button onclick="copyDescText('${descId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
                             KOPIEREN
                         </button>
@@ -81,9 +95,9 @@ window.startAiScan = async function() {
     }
 }
 
-// KOPIER-FUNKTION FÜR DEN BUTTON
+// UNIVERSAL-KOPIER-FUNKTION
 window.copyDescText = function(elementId, btn) {
-    const textToCopy = document.getElementById(elementId).innerText; // .innerText erhält die Absätze sauber!
+    const textToCopy = document.getElementById(elementId).innerText; 
     navigator.clipboard.writeText(textToCopy).then(() => {
         const originalText = btn.innerText;
         btn.innerText = "KOPIERT!";
