@@ -11,7 +11,7 @@ async function startAiScan() {
     resultsDiv.innerHTML = `
         <div class='flex flex-col items-center justify-center h-full mt-10 gap-3'>
             <div class='w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div>
-            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Deep Scan: ${input}...</div>
+            <div class='text-green-500 text-[10px] animate-pulse tracking-[0.2em] font-mono uppercase'>Deep Scan: ${input}...<br>Schreibe Verkaufs-Matrix...</div>
         </div>`;
 
     try {
@@ -32,11 +32,21 @@ async function startAiScan() {
         • <b>Video Hook:</b> [Idee für die ersten 3 Sekunden]<br><br>
 
         <b class="text-yellow-400 border-b border-yellow-700 block mb-2">4. [ TOP 20 SEO KEYWORDS ]</b>
-        Nenne exakt die 20 wichtigsten Suchbegriffe, die zwingend in den eBay/Amazon Titel oder die Tags müssen (als kompakte Liste mit Kommas getrennt, keine Stichpunkte):<br>
-        [Hier die 20 Keywords, z.B. Keyword 1, Keyword 2, Keyword 3...]<br><br>
+        Nenne exakt die 20 wichtigsten Suchbegriffe, die zwingend in den eBay/Amazon Titel oder die Tags müssen (als kompakte Liste mit Kommas getrennt):<br>
+        [Hier die 20 Keywords]<br><br>
 
         <b class="text-red-400 border-b border-red-900 block mb-2">5. [ DIE GRÖSSTEN GEFAHREN ]</b>
-        • <b>Risiko:</b> [Konkretes Risiko der Nische]`;
+        • <b>Risiko:</b> [Konkretes Risiko der Nische]<br><br>
+
+        <b class="text-purple-400 border-b border-purple-900 block mb-2 mt-4">6. [ MASTER-PRODUKTBESCHREIBUNG ]</b>
+        Erstelle einen direkt kopierbaren Beschreibungstext für das Produkt.
+        REGELN DAFÜR:
+        - Wissenschaftlich strukturiert nach AIDA oder PAS (Problembewusstsein schaffen, Verlangen wecken, Lösung bieten).
+        - Absolut RECHTSSICHER für Deutschland (UWG-konform): Keine illegalen Heilversprechen, keine rechtlich angreifbaren "Garantien", keine unzulässigen Superlative.
+        - Aufbau: Emotionale Einleitung (1-2 Sätze), danach 4 knallharte Nutzen-Argumente als Bulletpoints (mit •), gefolgt von einem klaren Call-to-Action (Handlungsaufforderung am Ende).
+        <div class="mt-2 text-gray-300 italic">
+        [Hier den fertigen Text einfügen]
+        </div>`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${token}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -49,7 +59,7 @@ async function startAiScan() {
         let aiOutput = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '<span>$1</span>').replace(/\*(.*?)\*/g, '<span>$1</span>').replace(/\n/g, '<br>');
 
         resultsDiv.innerHTML = `
-            <div class="border-l-2 border-l-green-500 bg-black/60 p-4 leading-relaxed font-mono shadow-[0_0_20px_rgba(0,255,65,0.1)]">
+            <div class="border-l-2 border-l-green-500 bg-black/60 p-4 leading-relaxed font-mono shadow-[0_0_20px_rgba(0,255,65,0.1)] mb-6">
                 <div class="font-bold text-sm text-white tracking-widest uppercase mb-4 border-b border-green-900/50 pb-2 flex justify-between">
                     <span>TARGET: ${input}</span><span class="text-green-500 text-[10px]">[OK]</span>
                 </div>
