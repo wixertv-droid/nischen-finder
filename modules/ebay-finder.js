@@ -35,20 +35,21 @@ async function startNischenScan() {
         if (!text) return;
 
         const keywords = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
-        resultsDiv.innerHTML = `<div class='flex flex-col items-center justify-center mt-8 gap-2 animate-pulse'><div class='w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div><div class='text-[10px] uppercase'>Uplink to eBay...</div></div>`;
+        resultsDiv.innerHTML = `<div class='flex flex-col items-center justify-center mt-8 gap-2 animate-pulse'><div class='w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div><div class='text-[10px] uppercase text-[#00ff41]'>Deep Data Scan läuft...</div></div>`;
 
         const token = await generateLiveToken(appId, certId);
         resultsDiv.innerHTML = ''; 
 
         for (let kw of keywords) {
             const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
-            resultsDiv.innerHTML += `<div id="${id}" class="border-l-2 border-l-green-800 bg-black/60 p-3 mb-2 min-h-[80px]">Scanning: ${kw}...</div>`;
+            resultsDiv.innerHTML += `<div id="${id}" class="border-l-2 border-l-green-800 bg-black/60 p-3 mb-2 min-h-[80px] flex items-center justify-center text-[10px] text-green-700 animate-pulse">Extrahiere Marktdaten für: ${kw}...</div>`;
         }
 
         for (let kw of keywords) {
             const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
             try {
-                const targetUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE&limit=20`;
+                // Wir holen 50 Ergebnisse für eine belastbare Stichprobe
+                const targetUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(kw)}&filter=itemLocationCountry:DE&limit=50`;
                 const proxySearchUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
                 
                 const res = await fetch(proxySearchUrl, {
@@ -58,35 +59,47 @@ async function startNischenScan() {
                 const totalItems = data.total || 0;
                 const items = data.itemSummaries || [];
 
-                let minP = 0, maxP = 0, newC = 0, thumb = "";
+                let minP = 0, maxP = 0, newC = 0, freeShipC = 0, thumb = "";
+                
                 if (items.length > 0) {
-                    const prices = items.map(i => parseFloat(i.price.value));
-                    minP = Math.min(...prices);
-                    maxP = Math.max(...prices);
-                    newC = items.filter(i => i.conditionId === '1000' || i.condition === 'New' || i.condition === 'Neu').length;
-                    // Vorschaubild vom ersten Artikel
+                    const prices = items.map(i => parseFloat(i.price?.value || 0)).filter(p => p > 0);
+                    if(prices.length > 0) {
+                        minP = Math.min(...prices);
+                        maxP = Math.max(...prices);
+                    }
+                    
+                    items.forEach(i => {
+                        // Zustand
+                        if (i.conditionId === '1000' || i.condition === 'New' || i.condition === 'Neu') newC++;
+                        // Versandkostenfrei
+                        if (i.shippingOptions && i.shippingOptions.some(opt => opt.shippingCost?.value === '0.00' || opt.shippingCost?.value === '0.0')) freeShipC++;
+                    });
+                    
                     if(items[0].image && items[0].image.imageUrl) thumb = items[0].image.imageUrl;
                 }
 
                 const newPercent = items.length > 0 ? Math.round((newC / items.length) * 100) : 0;
+                const shipPercent = items.length > 0 ? Math.round((freeShipC / items.length) * 100) : 0;
                 let colorClass = totalItems < 300 ? 'text-[#00ff41]' : (totalItems < 1000 ? 'text-yellow-400' : 'text-red-500');
 
                 document.getElementById(id).innerHTML = `
                     <div class="flex gap-3">
-                        ${thumb ? `<img src="${thumb}" class="w-16 h-16 object-cover border border-green-900/50 bg-black">` : `<div class="w-16 h-16 border border-green-900/50 bg-black flex items-center justify-center text-[8px]">NO_IMG</div>`}
+                        ${thumb ? `<img src="${thumb}" class="w-16 h-16 object-cover border border-green-900/50 bg-black flex-shrink-0">` : `<div class="w-16 h-16 border border-green-900/50 bg-black flex items-center justify-center text-[8px] flex-shrink-0">NO_IMG</div>`}
                         <div class="flex-grow">
                             <div class="flex justify-between border-b border-green-900/30 pb-1 mb-1 items-start">
-                                <strong class="text-[12px] text-white uppercase">${kw}</strong>
-                                <span class="${colorClass} text-[8px] font-black">[${totalItems}]</span>
+                                <strong class="text-[12px] text-white uppercase truncate w-32">${kw}</strong>
+                                <span class="${colorClass} text-[9px] font-black tracking-widest">[ ${totalItems.toLocaleString('de-DE')} ]</span>
                             </div>
-                            <div class="text-[10px] grid grid-cols-2 gap-x-2">
-                                <span class="text-green-500 opacity-60">Price:</span><span class="text-white text-right">${minP.toFixed(2)}€ - ${maxP.toFixed(2)}€</span>
-                                <span class="text-green-500 opacity-60">Structure:</span><span class="text-white text-right">${newPercent}% Neu</span>
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px]">
+                                <div class="flex justify-between"><span class="text-green-500/70">Preis:</span><span class="text-white">${minP.toFixed(2)} - ${maxP.toFixed(2)}€</span></div>
+                                <div class="flex justify-between"><span class="text-green-500/70">Neuware:</span><span class="text-white">${newPercent}%</span></div>
+                                <div class="flex justify-between"><span class="text-green-500/70">Gratis Versand:</span><span class="text-white">${shipPercent}%</span></div>
+                                <div class="flex justify-between"><span class="text-green-500/70">Potenzial:</span><span class="${newPercent < 60 ? 'text-[#00ff41]' : 'text-yellow-500'}">${newPercent < 60 ? 'HOCH' : 'MITTEL'}</span></div>
                             </div>
                         </div>
                     </div>
                 `;
-            } catch (e) { document.getElementById(id).innerHTML = `<div class="text-red-500 text-[10px]">${kw}: FAILED</div>`; }
+            } catch (e) { document.getElementById(id).innerHTML = `<div class="text-red-500 text-[10px] p-2">${kw}: ABFRAGE FEHLGESCHLAGEN</div>`; }
         }
-    } catch (f) { resultsDiv.innerHTML = `<div class='text-red-500 p-4'>${f.message}</div>`; }
+    } catch (f) { resultsDiv.innerHTML = `<div class='text-red-500 p-4 font-mono text-[10px] border border-red-900 bg-red-900/20'>${f.message}</div>`; }
 }
