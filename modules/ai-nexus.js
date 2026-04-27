@@ -7,21 +7,12 @@ window.startAiScan = async function() {
     const token = localStorage.getItem("ai_dww_token");
 
     if (!input || !token) return;
-    
-    // Entfernt den Standby-Text beim ersten Suchlauf
     if (resultsDiv.innerHTML.includes("Awaiting Target")) resultsDiv.innerHTML = '';
 
-    // RUHIGE Ladeanimation (OHNE Blinken/Pulse)
     const loadId = 'load-' + Date.now();
-    resultsDiv.insertAdjacentHTML('afterbegin', `
-        <div id="${loadId}" class='flex flex-col items-center justify-center my-6 gap-3'>
-            <div class='w-8 h-8 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div>
-            <div class='text-xs uppercase tracking-widest text-[#00ff41]'>Deep Scan läuft...</div>
-        </div>
-    `);
-
-    // Eingabefeld leeren für den nächsten Suchbegriff
-    inputField.value = "";
+    resultsDiv.insertAdjacentHTML('afterbegin', `<div id="${loadId}" class='flex flex-col items-center justify-center my-6 gap-3'><div class='w-8 h-8 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin'></div><div class='text-xs uppercase tracking-widest text-[#00ff41]'>Deep Scan läuft...</div></div>`);
+    inputField.value = ""; 
+    sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
 
     const prompt = `Analysiere die Nische: "${input}" für DACH. Gib NUR valides JSON zurück. 
     Liefere SEHR detaillierte Antworten, besonders bei 'hook' und 'description'.
@@ -43,63 +34,59 @@ window.startAiScan = async function() {
         const data = await res.json();
         const rawText = data.candidates[0].content.parts[0].text;
         const d = JSON.parse(rawText.match(/\{[\s\S]*\}/)[0]);
-
         document.getElementById(loadId).remove();
 
-        // KLARES, KONTRASTREICHES DESIGN
         const resultHTML = `
             <div class="bg-black/80 border border-green-900/50 p-4 font-mono text-sm shadow-[0_0_20px_rgba(0,255,65,0.05)] mb-6">
                 <div class="flex justify-between items-center border-b-2 border-green-800 pb-3 mb-4 bg-green-900/10 p-2">
                     <strong class="text-white text-lg tracking-widest uppercase">${input}</strong>
                     <span class="text-black bg-[#00ff41] px-2 py-1 text-[10px] font-bold">[ SCAN OK ]</span>
                 </div>
-                
                 <div class="mb-5">
-                    <div class="flex justify-between text-xs text-green-400 mb-1">
-                        <span class="uppercase tracking-widest">Markt-Potenzial</span>
-                        <span class="font-bold text-white">${d.marketScore}/100</span>
-                    </div>
-                    <div class="w-full bg-black h-2.5 rounded-sm overflow-hidden border border-green-900">
-                        <div class="bg-[#00ff41] h-full" style="width: ${d.marketScore}%"></div>
-                    </div>
+                    <div class="flex justify-between text-xs text-green-400 mb-1"><span class="uppercase tracking-widest">Markt-Potenzial</span><span class="font-bold text-white">${d.marketScore}/100</span></div>
+                    <div class="w-full bg-black h-2.5 rounded-sm overflow-hidden border border-green-900"><div class="bg-[#00ff41] h-full" style="width: ${d.marketScore}%"></div></div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4 mb-5 text-xs">
-                    <div class="border border-green-900/40 p-3 bg-black">
-                        <div class="text-green-500/70 mb-1 uppercase text-[10px]">Trend</div>
-                        <div class="text-white font-bold">${d.market.trend}</div>
-                    </div>
-                    <div class="border border-green-900/40 p-3 bg-black">
-                        <div class="text-green-500/70 mb-1 uppercase text-[10px]">Marge / CPC</div>
-                        <div class="text-white font-bold">${d.market.margin} | ${d.market.cpc}</div>
-                    </div>
-                    <div class="col-span-2 border border-green-900/40 p-3 bg-black">
-                        <div class="text-green-500/70 mb-1 uppercase text-[10px]">Zielgruppe & Problem</div>
-                        <div class="text-white">${d.psychology.target}</div>
-                        <div class="text-green-400 mt-1 italic">> Löste Schmerz: ${d.psychology.pain}</div>
-                    </div>
+                    <div class="border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Trend</div><div class="text-white font-bold">${d.market.trend}</div></div>
+                    <div class="border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Marge / CPC</div><div class="text-white font-bold">${d.market.margin} | ${d.market.cpc}</div></div>
+                    <div class="col-span-2 border border-green-900/40 p-3 bg-black"><div class="text-green-500/70 mb-1 uppercase text-[10px]">Zielgruppe & Problem</div><div class="text-white">${d.psychology.target}</div><div class="text-green-400 mt-1 italic">> Löste Schmerz: ${d.psychology.pain}</div></div>
                 </div>
-                
                 <div class="mb-5 border-l-2 border-yellow-500 bg-yellow-900/10 p-3 text-xs">
                     <b class="text-yellow-500 block mb-3 uppercase tracking-widest">Top 20 SEO Keywords</b>
-                    <div class="text-white leading-relaxed flex flex-wrap gap-1.5">
-                        ${d.seo.map(k => `<span class="bg-black border border-yellow-700/50 px-2 py-1 text-[10px] rounded">${k}</span>`).join('')}
-                    </div>
+                    <div class="text-white leading-relaxed flex flex-wrap gap-1.5">${d.seo.map(k => `<span class="bg-black border border-yellow-700/50 px-2 py-1 text-[10px] rounded">${k}</span>`).join('')}</div>
                 </div>
-                
                 <div class="mb-5 text-xs text-white bg-green-900/20 p-3 border border-[#00ff41]/30">
-                    <b class="text-[#00ff41] block mb-2 uppercase tracking-widest">Video Hook (${d.marketing.platform})</b>
-                    <span class="leading-relaxed">${d.marketing.hook}</span>
+                    <b class="text-[#00ff41] block mb-2 uppercase tracking-widest">Video Hook (${d.marketing.platform})</b><span class="leading-relaxed">${d.marketing.hook}</span>
                 </div>
-                
                 <div class="bg-black p-4 text-xs text-green-300 leading-relaxed border border-green-900">
                     <b class="text-white block mb-3 uppercase tracking-widest border-b border-green-900/50 pb-2">Master-Produktbeschreibung (AIDA)</b>
                     <div class="text-white/90 font-sans tracking-wide text-[13px]">${d.description}</div>
                 </div>
             </div>`;
-            
         resultsDiv.insertAdjacentHTML('afterbegin', resultHTML);
+        sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
     } catch (e) { 
         document.getElementById(loadId).innerHTML = `<div class="text-red-500 p-4 border border-red-900 bg-red-900/20 text-xs">FEHLER: API Timeout. Bitte versuche es erneut.</div>`; 
+        sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
     }
+}
+
+// MEMORY SYSTEM
+if (!window.aiObserver) {
+    window.aiObserver = new MutationObserver(() => {
+        const resDiv = document.getElementById('ai-results');
+        const inDiv = document.getElementById('ai-input');
+        if (resDiv && !resDiv.dataset.restored) {
+            const saved = sessionStorage.getItem('dww_ai_html');
+            if (saved) resDiv.innerHTML = saved;
+            resDiv.dataset.restored = "true";
+        }
+        if (inDiv && !inDiv.dataset.restored) {
+            const savedInput = sessionStorage.getItem('dww_ai_input');
+            if (savedInput) inDiv.value = savedInput;
+            inDiv.dataset.restored = "true";
+            inDiv.addEventListener('input', e => sessionStorage.setItem('dww_ai_input', e.target.value));
+        }
+    });
+    window.aiObserver.observe(document.body, { childList: true, subtree: true });
 }
