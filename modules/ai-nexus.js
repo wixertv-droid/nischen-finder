@@ -14,17 +14,21 @@ window.startAiScan = async function() {
     inputField.value = ""; 
     sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
 
-    // NEU: Zwingt die KI, einen englischen Regie-Prompt für Video-Generatoren zu schreiben
+    // HIER DAS PROMPT-UPDATE: Neues Feld "videoScript" für den deutschen Text hinzugefügt
     const prompt = `Analysiere die Nische: "${input}" für DACH. Gib NUR valides JSON zurück. 
-    Liefere SEHR detaillierte Antworten.
+    Liefere SEHR detaillierte Antworten, besonders bei 'hook' und 'description'.
     {
       "marketScore": 85,
       "market": {"trend": "Prognose in 1 Satz", "cpc": "0,50€", "margin": "30%"},
       "psychology": {"target": "Genaue Zielgruppe", "pain": "Welcher Schmerz wird gelöst?"},
-      "marketing": {"platform": "Beste Plattform", "videoPrompt": "Schreibe einen hochdetaillierten ENGLISCHEN (!) Text-to-Video Prompt (Regieanweisung) für eine AI (wie Veo, Kling, Sora). Beschreibe eine extrem fesselnde erste Szene (3-5 Sekunden), Kamerabewegung (z.B. Cinematic Pan), Beleuchtung und fotorealistische Details, die das Produkt oder das Problem perfekt in Szene setzen."},
+      "marketing": {
+        "platform": "Beste Plattform", 
+        "videoPrompt": "Schreibe einen hochdetaillierten ENGLISCHEN (!) Text-to-Video Prompt für eine AI. Kamerabewegung, Beleuchtung, fotorealistische Details.",
+        "videoScript": "Schreibe das perfekt dazu passende DEUTSCHE Kurz-Skript (Sprecher-Text oder Text-Overlay) für dieses Video. Knackig, 3-4 kurze, emotionale Sätze, die zum Kauf anregen."
+      },
       "seo": ["KW 1", "KW 2", "KW 3", "KW 4", "KW 5", "KW 6", "KW 7", "KW 8", "KW 9", "KW 10", "KW 11", "KW 12", "KW 13", "KW 14", "KW 15", "KW 16", "KW 17", "KW 18", "KW 19", "KW 20"],
       "risks": ["Risiko 1", "Risiko 2"],
-      "description": "Schreibe eine ausführliche, rechtssichere Produktbeschreibung nach der AIDA-Formel. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Nutze HTML <br> für Absätze."
+      "description": "Schreibe eine ausführliche, rechtssichere Produktbeschreibung nach der AIDA-Formel. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Es muss ein fließender, direkt kopierbarer Text sein. Nutze HTML <br> für Absätze."
     }`;
 
     try {
@@ -39,6 +43,7 @@ window.startAiScan = async function() {
 
         const descId = 'desc-' + Date.now();
         const videoPromptId = 'vid-' + Date.now();
+        const scriptId = 'script-' + Date.now();
 
         const resultHTML = `
             <div class="bg-black/80 border border-green-900/50 p-4 font-mono text-sm shadow-[0_0_20px_rgba(0,255,65,0.05)] mb-6">
@@ -67,13 +72,26 @@ window.startAiScan = async function() {
                     <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
                         <div>
                             <b class="text-[#00ff41] uppercase tracking-widest block">AI Video Prompt</b>
-                            <span class="text-green-500/70 text-[9px] uppercase">Für Veo, Kling, Runway (${d.marketing.platform})</span>
+                            <span class="text-green-500/70 text-[9px] uppercase">Kamera-Regie (Englisch)</span>
                         </div>
                         <button onclick="copyDescText('${videoPromptId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
                             KOPIEREN
                         </button>
                     </div>
                     <div id="${videoPromptId}" class="text-white font-sans tracking-wide text-[13px] italic">${d.marketing.videoPrompt}</div>
+                </div>
+
+                <div class="mb-5 bg-black p-4 text-xs leading-relaxed border border-[#00ff41]/30">
+                    <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
+                        <div>
+                            <b class="text-white uppercase tracking-widest block">Video Skript (Deutsch)</b>
+                            <span class="text-green-500/70 text-[9px] uppercase">Für CapCut Untertitel & Sprecher</span>
+                        </div>
+                        <button onclick="copyDescText('${scriptId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
+                            KOPIEREN
+                        </button>
+                    </div>
+                    <div id="${scriptId}" class="text-white/90 font-sans tracking-wide text-[13px] font-bold">${d.marketing.videoScript}</div>
                 </div>
                 
                 <div class="bg-black p-4 text-xs text-green-300 leading-relaxed border border-green-900">
