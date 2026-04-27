@@ -9,8 +9,16 @@ window.startNischenScan = async function() {
 
     if (!appId || !text) return;
 
+    // Wenn der Platzhalter-Text noch da ist, entfernen wir ihn
+    if (resultsDiv.innerHTML.includes("System ready")) {
+        resultsDiv.innerHTML = '';
+    }
+
     const keywords = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
-    resultsDiv.innerHTML = `<div class='flex flex-col items-center justify-center mt-10 gap-2 animate-pulse'><div class='w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div><div class='text-[10px] uppercase text-green-500'>eBay Live Uplink...</div></div>`;
+    
+    // Temporärer Lade-Indikator
+    const loadId = 'load-' + Date.now();
+    resultsDiv.insertAdjacentHTML('afterbegin', `<div id="${loadId}" class='flex flex-col items-center justify-center my-4 gap-2 animate-pulse'><div class='w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin'></div><div class='text-[10px] uppercase text-green-500'>eBay Live Uplink...</div></div>`);
 
     try {
         const credentials = btoa(`${appId}:${certId}`);
@@ -20,14 +28,15 @@ window.startNischenScan = async function() {
         const tokenData = await tokenRes.json();
         const token = tokenData.access_token;
 
-        resultsDiv.innerHTML = ''; 
+        document.getElementById(loadId).remove(); // Lade-Indikator entfernen
 
         for (let kw of keywords) {
-            const id = `res-${btoa(encodeURIComponent(kw)).replace(/=/g, '')}`;
-            resultsDiv.innerHTML += `<div id="${id}" class="border-l-2 border-green-800 bg-black/40 p-4 mb-4 text-xs text-green-700 animate-pulse">Scanne Datenbank: ${kw}...</div>`;
+            const id = `res-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+            // NEUE ERGEBNISSE OBEN ANFÜGEN
+            resultsDiv.insertAdjacentHTML('afterbegin', `<div id="${id}" class="border-l-2 border-green-800 bg-black/40 p-4 mb-4 text-xs text-green-700 animate-pulse">Scanne Datenbank: ${kw}...</div>`);
             scanSingleKeyword(kw, token, id);
         }
-    } catch (e) { resultsDiv.innerHTML = `<div class="text-red-500 p-4 text-xs">TOKEN_ERROR: ${e.message}</div>`; }
+    } catch (e) { document.getElementById(loadId).innerHTML = `<div class="text-red-500 p-2 text-xs">TOKEN_ERROR: ${e.message}</div>`; }
 }
 
 async function scanSingleKeyword(kw, token, targetId) {
@@ -49,10 +58,16 @@ async function scanSingleKeyword(kw, token, targetId) {
         const freeShipCount = items.filter(i => i.shippingOptions && i.shippingOptions.some(opt => opt.shippingCost?.value === '0.00')).length;
         const shipPercent = items.length > 0 ? Math.round((freeShipCount / items.length) * 100) : 0;
 
+        // NEUE METRIKEN
+        const buyItNowCount = items.filter(i => i.buyingOptions && i.buyingOptions.includes('FIXED_PRICE')).length;
+        const buyItNowPercent = items.length > 0 ? Math.round((buyItNowCount / items.length) * 100) : 0;
+        const topRatedCount = items.filter(i => parseFloat(i.seller?.feedbackPercentage || 0) >= 99.0).length;
+        const topRatedPercent = items.length > 0 ? Math.round((topRatedCount / items.length) * 100) : 0;
+
         const thumb = items[0]?.image?.imageUrl || "";
         let colorClass = total < 300 ? 'text-[#00ff41]' : (total < 1000 ? 'text-yellow-400' : 'text-red-500');
         
-        let textVerdict = total > 1000 ? "Sehr überlaufen. Nur mit Top-Listing machbar." : (newPercent < 50 ? "Marktlücke für professionelle Neuware!" : "Solides Potenzial.");
+        let textVerdict = total > 1000 ? "Sehr überlaufen." : (newPercent < 50 ? "Marktlücke für Neuware!" : "Solides Potenzial.");
 
         document.getElementById(targetId).innerHTML = `
             <div class="bg-black/60 border border-green-900/50 p-3 shadow-[0_0_15px_rgba(0,255,65,0.05)]">
@@ -67,20 +82,25 @@ async function scanSingleKeyword(kw, token, targetId) {
                         <div><div class="opacity-50 text-green-500">MIN PREIS</div><div class="text-white font-bold">${minP.toFixed(2)}€</div></div>
                         <div><div class="opacity-50 text-green-500">MAX PREIS</div><div class="text-white font-bold">${maxP.toFixed(2)}€</div></div>
                         <div><div class="opacity-50 text-green-500">GRATIS VERSAND</div><div class="text-white font-bold">${shipPercent}%</div></div>
-                        <div><div class="opacity-50 text-green-500">TOP-ANGEBOTE</div><div class="text-white font-bold">${items.length} analysiert</div></div>
+                        <div><div class="opacity-50 text-green-500">FESTPREIS (KAUFEN)</div><div class="text-white font-bold">${buyItNowPercent}%</div></div>
                     </div>
                 </div>
 
-                <div class="border-t border-green-900/30 pt-3">
-                    <div class="text-[9px] text-green-500 mb-1 flex justify-between">
-                        <span>STRUKTUR: NEU (${newPercent}%) vs. GEBRAUCHT (${usedPercent}%)</span>
+                <div class="border-t border-green-900/30 pt-3 space-y-2">
+                    <div>
+                        <div class="text-[9px] text-green-500 mb-0.5 flex justify-between"><span>STRUKTUR: NEUWARE</span><span>${newPercent}%</span></div>
+                        <div class="flex w-full h-1.5 bg-gray-800 rounded-full overflow-hidden border border-green-900">
+                            <div class="bg-[#00ff41]" style="width: ${newPercent}%"></div>
+                            <div class="bg-yellow-600" style="width: ${usedPercent}%"></div>
+                        </div>
                     </div>
-                    <div class="flex w-full h-1.5 bg-gray-800 rounded-full overflow-hidden border border-green-900">
-                        <div class="bg-[#00ff41]" style="width: ${newPercent}%"></div>
-                        <div class="bg-yellow-600" style="width: ${usedPercent}%"></div>
+                    <div>
+                        <div class="text-[9px] text-green-500 mb-0.5 flex justify-between"><span>GEGNER: TOP-BEWERTET (>99%)</span><span>${topRatedPercent}%</span></div>
+                        <div class="flex w-full h-1.5 bg-gray-800 rounded-full overflow-hidden border border-green-900">
+                            <div class="bg-red-500" style="width: ${topRatedPercent}%"></div>
+                        </div>
                     </div>
                 </div>
-
                 <div class="mt-3 text-[10px] text-green-400 italic">>> ${textVerdict}</div>
             </div>`;
     } catch (e) { document.getElementById(targetId).innerHTML = `<div class="text-red-500 text-[10px] p-2">FEHLER: ${kw} konnte nicht geladen werden.</div>`; }
