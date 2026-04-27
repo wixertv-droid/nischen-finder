@@ -14,7 +14,7 @@ window.startAiScan = async function() {
     inputField.value = ""; 
     sessionStorage.setItem('dww_ai_html', resultsDiv.innerHTML);
 
-    // HIER DAS PROMPT-UPDATE: Neues Feld "videoScript" für den deutschen Text hinzugefügt
+    // HIER DAS PROMPT-UPDATE: Strikte 2000-Zeichen-Regel für die Beschreibung
     const prompt = `Analysiere die Nische: "${input}" für DACH. Gib NUR valides JSON zurück. 
     Liefere SEHR detaillierte Antworten, besonders bei 'hook' und 'description'.
     {
@@ -28,7 +28,7 @@ window.startAiScan = async function() {
       },
       "seo": ["KW 1", "KW 2", "KW 3", "KW 4", "KW 5", "KW 6", "KW 7", "KW 8", "KW 9", "KW 10", "KW 11", "KW 12", "KW 13", "KW 14", "KW 15", "KW 16", "KW 17", "KW 18", "KW 19", "KW 20"],
       "risks": ["Risiko 1", "Risiko 2"],
-      "description": "Schreibe eine ausführliche, rechtssichere Produktbeschreibung nach der AIDA-Formel. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Es muss ein fließender, direkt kopierbarer Text sein. Nutze HTML <br> für Absätze."
+      "description": "Schreibe eine verkaufsstarke, rechtssichere Produktbeschreibung. WICHTIG: Lass die Wörter 'Attention', 'Interest', 'Desire', 'Action' und 'AIDA' im Text komplett weg! Nutze HTML <br> für Absätze. MAXIMALES LIMIT: Der Text MUSS zwingend unter 2000 Zeichen lang sein!"
     }`;
 
     try {
@@ -96,7 +96,10 @@ window.startAiScan = async function() {
                 
                 <div class="bg-black p-4 text-xs text-green-300 leading-relaxed border border-green-900">
                     <div class="flex justify-between items-center border-b border-green-900/50 pb-2 mb-3">
-                        <b class="text-white uppercase tracking-widest">Listing Text (AIDA)</b>
+                        <div>
+                            <b class="text-white uppercase tracking-widest block">Listing Text</b>
+                            <span class="text-green-500/70 text-[9px] uppercase">Max. 2000 Zeichen</span>
+                        </div>
                         <button onclick="copyDescText('${descId}', this)" class="bg-green-900/40 hover:bg-[#00ff41] hover:text-black text-[#00ff41] border border-[#00ff41] px-3 py-1 text-[10px] font-bold rounded transition-colors duration-200">
                             KOPIEREN
                         </button>
